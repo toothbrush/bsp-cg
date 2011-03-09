@@ -4,8 +4,8 @@ LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
 all: cg
 
-cg: bspedupack.o
-	$(CC) $(CFLAGS) bspedupack.o bspcg.o $(LFLAGS)
+cg: bspedupack.o bspcg.o
+	$(CC) $(CFLAGS) -o cg bspedupack.o bspcg.o $(LFLAGS)
 
 bspcg.o: bspcg.c
 	$(CC) $(CFLAGS) -c bspcg.c
