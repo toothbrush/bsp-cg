@@ -4,10 +4,10 @@ LFLAGS= -lm -lbsponmpi
 
 all: bspinprod.o bspmv.o
 
-bspinprod.o: bspinprod.c bspedupack.h
+bspinprod.o: bspinprod.c bspedupack.h bspfuncs.h
 	$(CC) $(CFLAGS) -c bspinprod.c
 
-bspmv.o: bspmv.c bspedupack.h
+bspmv.o: bspmv.c bspedupack.h bspfuncs.h
 	$(CC) $(CFLAGS) -c bspmv.c
 
 clean:

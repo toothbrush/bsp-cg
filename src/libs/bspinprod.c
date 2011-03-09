@@ -1,3 +1,4 @@
+#include "bspfuncs.h"
 #include "bspedupack.h"
 
 /*  This program computes the sum of the first n squares, for n>=0,
@@ -8,14 +9,6 @@
 */
 
 int P; /* number of processors requested */ 
-
-int nloc(int p, int s, int n){
-    /* Compute number of local components of processor s for vector
-       of length n distributed cyclically over p processors. */
-
-    return  (n+p-s-1)/p ; 
-
-} /* end nloc */
 
 double bspip(int p, int s, int n, double *x, double *y){
     /* Compute inner product of vectors x and y of length n>=0 */
@@ -93,23 +86,3 @@ void bspinprod(){
     bsp_end();
 
 } /* end bspinprod */
-
-int main(int argc, char **argv){
-
-    bsp_init(bspinprod, argc, argv);
-
-    /* sequential part */
-    printf("How many processors do you want to use?\n"); fflush(stdout);
-    scanf("%d",&P);
-    if (P > bsp_nprocs()){
-        printf("Sorry, not enough processors available.\n"); fflush(stdout);
-        exit(1);
-    }
-
-    /* SPMD part */
-    bspinprod();
-
-    /* sequential part */
-    exit(0);
-
-} /* end main */

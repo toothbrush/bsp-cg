@@ -1,3 +1,4 @@
+#include "bspfuncs.h"
 #include "bspedupack.h"
 
 void bspmv(int p, int s, int n, int nz, int nrows, int ncols,
