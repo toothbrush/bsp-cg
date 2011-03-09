@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-extern char *itoa(int, char *, int);
+//extern char *itoa(int, char *, int);
 
 void out(const char *fmt, ...)
 {
@@ -9,8 +9,7 @@ void out(const char *fmt, ...)
 
     va_start(argp, fmt);
 
-    printf("%s", fmt);
-    printf(fmt, argp);
+    vfprintf(stderr, fmt, argp);
 
     va_end(argp);
 }
