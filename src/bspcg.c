@@ -1,4 +1,5 @@
 #include "libs/bspedupack.h"
+#include "libs/bspfuncs.h"
 #include <limits.h>
 #include <stdlib.h>
 
