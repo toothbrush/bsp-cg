@@ -11,8 +11,6 @@
  * An implementation of parallel CG. 
  */
 
-int P; // number of requested procs.
-
 void bspInitCG(){
     
     double time0, time1;
