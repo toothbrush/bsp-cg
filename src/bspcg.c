@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "bspcg.h"
+#include "paullib.h"
 
 /* 
  * Author: Paul van der Walt
@@ -18,10 +19,10 @@ void bspInitCG(){
     
     bsp_begin(P);
     p= bsp_nprocs(); /* p = number of processors obtained */ 
-    printf("Now we have %d processors.\n", p);
+    out("Now we have %d processors.\n", p);
     s= bsp_pid();    /* s = processor number */ 
     if (s==0){
-        printf("Hi.\n");
+        out("Hi.\n");
     }
 
     bsp_sync(); 
@@ -35,7 +36,7 @@ void bspInitCG(){
 
     fflush(stdout);
     if (s==0){
-        printf("This took only %.6lf seconds.\n", time1-time0);
+        out("This took only %.6lf seconds.\n", time1-time0);
         fflush(stdout);
     }
 
@@ -50,13 +51,13 @@ int main(int argc, char **argv){
     /* sequential part */
     if (argc != 1)
     {
-        printf("Usage: %s\n", argv[0]);
+        out("Usage: %s\n", argv[0]);
         bsp_abort("This program expects an Extended Matrix Market format file on stdin. \n");
     }
 
     P = bsp_nprocs(); // maximum amount of procs
 
-    printf("Using %d processors. \n", P);
+    out("Using %d processors. \n", P);
 
     /* SPMD part */
     bspInitCG();

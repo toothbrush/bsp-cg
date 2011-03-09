@@ -2,10 +2,16 @@ CC= mpicc
 CFLAGS= -g -Wall
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
+# the objects required to build the final executable CG
+OBJS=bspedupack.o bspcg.o paullib.o 
+
 all: cg
 
-cg: bspedupack.o bspcg.o
-	$(CC) $(CFLAGS) -o cg bspedupack.o bspcg.o $(LFLAGS)
+cg: $(OBJS)
+	$(CC) $(CFLAGS) -o cg $(OBJS) $(LFLAGS)
+
+paullib.o: paullib.c
+	$(CC) $(CFLAGS) -c paullib.c
 
 bspcg.o: bspcg.c
 	$(CC) $(CFLAGS) -c bspcg.c
