@@ -38,6 +38,8 @@ void bspInitCG(){
     //         b: dense vector, length n
     // output: x: dense vector, length n; A.x = b
 
+    int n = 2 ; //TEMP TODO real $n$
+
     double *x = vecallocd(n);
     int i, k; 
     for(i = 0; i < n; i++)
@@ -47,31 +49,34 @@ void bspInitCG(){
 
     k = 0; // iteration number
     double* r = vecallocd(n);
-    r = axpy(A,x,minus(b));
-    r = minus(r);
-    double sqrtrho = norm(r); // the remaining residue
-    double rho = sqrtrho*sqrtrho;
+    r = mv(A,x);
+    negate(r);
+    add(r,r,b);
+    double rho = dot(r,r);
 
-    while(sqrtrho > EPS * norm(b) && k < KMAX) {
+    while(sqrt(rho) > EPS * sqrt(dot(b,b)) && k < KMAX) {
         if(k == 0) {
-            p = r;
+            copyvec(p, r) ; // do p <- r;
         } else {
-            beta = rho/rhoold;
-            p = add(r,beta * p); //TODO axpy here.
+            beta = rho/rho_old;
+            scalevec(beta,pold);
+            add(p, r, pold); //TODO hmmmmmm p modified!
         }
 
-        w = axpy(A,p,0);
-        gamma = vecmul(transpose(p),w);
+        w = mv(A,p);
+        gamma = dot(p,w);
         alpha = rho / gamma;
-        x = add(x, alpha * p);
-        r = add(r, -alpha * w);
-        rhoold = rho;
-        sqrtrho = norm(r);
-        rho = sqrtrho * sqrtrho;
+        copyvec(pold, p);
+        scalevector(p,alpha);
+        scalevector(w,-alpha);
+        add(x, x, p);
+        add(r, r, w);
+        rho_old = rho;
+        rho = dot(r,r);
         k++;
     }
 
-    // here x should be computed. 
+    // here x should be correct
 
     // end work
     bsp_sync();  
