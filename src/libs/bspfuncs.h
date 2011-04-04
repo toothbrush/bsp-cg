@@ -10,8 +10,6 @@ void bspmv_init(int p, int s, int n, int nrows, int ncols,
                 int *vindex, int *uindex, int *srcprocv, int *srcindv,
                 int *destprocu, int *destindu);
 
-int P; /* number of processors requested */ 
-
 double bspip(int p, int s, int n, double *x, double *y);
 
 void bspinprod();
