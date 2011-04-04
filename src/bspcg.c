@@ -3,6 +3,8 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#include <Mondriaan.h>
+
 #include "bspcg.h"
 #include "paullib.h"
 
@@ -39,6 +41,8 @@ void bspInitCG(){
     // output: x: dense vector, length n; A.x = b
 
     int n = 2 ; //TEMP TODO real $n$
+    double *b;  // temp input vector
+    struct sparsematrix A;
 
     double *x = vecallocd(n);
     int i, k; 
@@ -49,12 +53,14 @@ void bspInitCG(){
 
     k = 0; // iteration number
     double* r = vecallocd(n);
-    r = mv(A,x);
+    r = bspmv(A,x);
     negate(r);
     add(r,r,b);
-    double rho = dot(r,r);
+    double rho = bspip(r,r);
+    double alpha,gamma,rho_old;
 
-    while(sqrt(rho) > EPS * sqrt(dot(b,b)) && k < KMAX) {
+
+    while(sqrt(rho) > EPS * sqrt(bspip(b,b)) && k < KMAX) {
         if(k == 0) {
             copyvec(p, r) ; // do p <- r;
         } else {
@@ -63,8 +69,8 @@ void bspInitCG(){
             add(p, r, pold); //TODO hmmmmmm p modified!
         }
 
-        w = mv(A,p);
-        gamma = dot(p,w);
+        w = bspmv(A,p);
+        gamma = bspip(p,w);
         alpha = rho / gamma;
         copyvec(pold, p);
         scalevector(p,alpha);
@@ -72,7 +78,7 @@ void bspInitCG(){
         add(x, x, p);
         add(r, r, w);
         rho_old = rho;
-        rho = dot(r,r);
+        rho = bspip(r,r);
         k++;
     }
 
