@@ -65,8 +65,8 @@ void bspmv_test(){
     }
     readvalues(valuesfilename,nv,v);
 
-    // postcondition:
-    // u = Av
+    // postcondition: (not yet achieved)
+    // u s.t. Au = v
     u= vecallocd(nu);
     
     if (s==0){
@@ -76,10 +76,13 @@ void bspmv_test(){
     bsp_sync(); 
     time0= bsp_time();
     
+    // alloc metadata arrays 
     srcprocv= vecalloci(ncols);
     srcindv= vecalloci(ncols);
     destprocu= vecalloci(nrows);
     destindu= vecalloci(nrows);
+
+    // do the heavy lifting.
     bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
                srcprocv,srcindv,destprocu,destindu);
 
@@ -88,6 +91,8 @@ void bspmv_test(){
     
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
           destprocu,destindu,nv,nu,v,u);
+    // end heavy lifting.
+    //
     bsp_sync();
     time2= bsp_time();
     
