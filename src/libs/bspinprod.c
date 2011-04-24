@@ -13,7 +13,6 @@ int P; /* number of processors requested */
 double bspip(int p, int s, int n, double *x, double *y){
     /* Compute inner product of vectors x and y of length n>=0 */
 
-    int nloc(int p, int s, int n);
     double inprod, *Inprod, alpha;
     int i, t;
   
@@ -41,8 +40,6 @@ double bspip(int p, int s, int n, double *x, double *y){
 
 void bspinprod(){
     
-    double bspip(int p, int s, int n, double *x, double *y);
-    int nloc(int p, int s, int n);
     double *x, alpha, time0, time1;
     int p, s, n, nl, i, iglob;
     
