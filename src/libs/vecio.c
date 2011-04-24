@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "bspedupack.h"
+#include "paullib.h"
 
 void bspinput2triple(int p, int s, int *pnA, int *pnz, 
                      int **pia, int **pja, double **pa){
@@ -252,6 +253,20 @@ void triple2icrs(int n, int nz, int *ia,  int *ja, double *a,
    
 } /* end triple2icrs */
 
+void readvalues(const char *fn, int nv, double*v)
+{
+
+    FILE *fp;
+
+    // if s==0 ?????
+
+    fp=fopen(fn,"r");
+    int i;
+    for(i=0; i<nv; i++)
+        fscanf(fp,"%lf\n", &v[i]);
+
+    fclose(fp);
+}
 void bspinputvec(int p, int s, const char *filename,
                  int *pn, int *pnv, int **pvindex){
   
