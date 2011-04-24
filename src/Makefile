@@ -3,8 +3,8 @@ CFLAGS= -g -Wall
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
 # the objects required to build the final executable CG
-OBJS=bspedupack.o bspcg.o paullib.o
-LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o
+OBJS=bspedupack.o bspcg.o
+LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o libs/paullib.o
 
 all: lib cg
 
@@ -13,9 +13,6 @@ lib: force-look
 
 cg: $(OBJS) lib
 	$(CC) $(CFLAGS) -o cg $(OBJS) $(LIBOBJS) $(LFLAGS)
-
-paullib.o: paullib.c
-	$(CC) $(CFLAGS) -c paullib.c
 
 bspcg.o: bspcg.c
 	$(CC) $(CFLAGS) -c bspcg.c
