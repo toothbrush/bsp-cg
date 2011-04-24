@@ -24,7 +24,7 @@ void bspmv_test(){
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
         *srcprocv, *srcindv, *destprocu, *destindu;
     double *a, *v, *u, time0, time1, time2;
-    char vfilename[STRLEN], ufilename[STRLEN];
+    char vfilename[STRLEN], ufilename[STRLEN], valuesfilename[STRLEN];
 
     bsp_begin(P);
     p= bsp_nprocs(); /* p=P */
@@ -57,10 +57,13 @@ void bspmv_test(){
 
     /* Initialize input vector v */
     v= vecallocd(nv);
-    for(i=0; i<nv; i++){
-        iglob= vindex[i];
-        v[i]= iglob+1;
+
+    /* Fill input vector with values */
+    if (s==0){
+        printf("Finally enter the name of the file containing v's values\n");
+        scanf("%s", valuesfilename);
     }
+    readvalues(valuesfilename,nv,v);
 
     // postcondition:
     // u = Av
