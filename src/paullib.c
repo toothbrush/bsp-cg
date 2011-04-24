@@ -9,6 +9,16 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+void negate(double* v)
+{
+
+}
+
+void copyvec(double* dest, double* src)
+{
+
+}
+
 /*
  * This function wraps printf to redirect debug
  * output to stderr. This is useful if we (later) want

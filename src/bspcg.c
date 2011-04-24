@@ -3,8 +3,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include <Mondriaan.h>
-
 #include "bspcg.h"
 #include "paullib.h"
 
@@ -42,7 +40,23 @@ void bspInitCG(){
 
     int n = 2 ; //TEMP TODO real $n$
     double *b;  // temp input vector
-    struct sparsematrix A;
+
+    // ICRS matrix A:
+    int nz;     // number of nonzeroes
+    int nrows;  // number of rows
+    int ncols;  // number of columns
+    double *a;  // the nonzero values
+    int *inc;   // ??
+    // end ICRS matrix A;
+    // example data:
+    nz = 4; nrows = 2; ncols = 2;
+    a[0] = 4;    a[1] = 1;
+    a[2] = 1;    a[3] = 3;
+    inc[0] = 1;
+    inc[0] = 1;
+    inc[0] = 1 + ncols;
+    inc[0] = 1;
+    // end example data
 
     double *x = vecallocd(n);
     int i, k; 
@@ -53,32 +67,41 @@ void bspInitCG(){
 
     k = 0; // iteration number
     double* r = vecallocd(n);
+    
+    // temporary MV data structures
+    int *srcprocv,*srcindv,*destprocu,*destindu;
+    // end temporary MV ds
+
+    bspmv_init(p,s,n, nrows, ncols, n,n, );
     r = bspmv(A,x);
     negate(r);
     add(r,r,b);
-    double rho = bspip(r,r);
-    double alpha,gamma,rho_old;
+    double rho = bspip(p,s,n,r,r);
+    double alpha,gamma,rho_old,beta;
 
+    double *pvec = vecallocd(n);
+    double *pold = vecallocd(n);
+    double *w    = vecallocd(n);
 
-    while(sqrt(rho) > EPS * sqrt(bspip(b,b)) && k < KMAX) {
+    while(sqrt(rho) > EPS * sqrt(bspip(p,s,n,b,b)) && k < KMAX) {
         if(k == 0) {
-            copyvec(p, r) ; // do p <- r;
+            copyvec(pvec, r) ; // do p <- r;
         } else {
             beta = rho/rho_old;
             scalevec(beta,pold);
-            add(p, r, pold); //TODO hmmmmmm p modified!
+            add(pvec, r, pold); //TODO hmmmmmm p modified!
         }
 
-        w = bspmv(A,p);
-        gamma = bspip(p,w);
+        w = bspmv(A,pvec);
+        gamma = bspip(p,s,n,pvec,w);
         alpha = rho / gamma;
-        copyvec(pold, p);
-        scalevector(p,alpha);
+        copyvec(pold, pvec);
+        scalevector(pvec,alpha);
         scalevector(w,-alpha);
-        add(x, x, p);
+        add(x, x, pvec);
         add(r, r, w);
         rho_old = rho;
-        rho = bspip(r,r);
+        rho = bspip(p,s,n,r,r);
         k++;
     }
 
@@ -89,9 +112,11 @@ void bspInitCG(){
     time1=bsp_time();
 
     fflush(stdout);
+    fflush(stderr);
     if (s==0){
         out("This took only %.6lf seconds.\n", time1-time0);
         fflush(stdout);
+        fflush(stderr);
     }
 
     bsp_end();
