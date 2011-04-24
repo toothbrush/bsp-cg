@@ -14,7 +14,6 @@
        u[i]= (sum: 0<=j<n: a[i][j]*v[j]).
 */
 
-#define NITERS 10
 
 int P;
 
@@ -62,6 +61,9 @@ void bspmv_test(){
         iglob= vindex[i];
         v[i]= iglob+1;
     }
+
+    // postcondition:
+    // u = Av
     u= vecallocd(nu);
     
     if (s==0){
@@ -78,24 +80,19 @@ void bspmv_test(){
     bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
                srcprocv,srcindv,destprocu,destindu);
 
-    if (s==0){
-        printf("Start of %d matrix-vector multiplications.\n",(int)NITERS);
-        fflush(stdout);
-    }
     bsp_sync(); 
     time1= bsp_time();
     
-    for(iter=0; iter<NITERS; iter++)
-        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
-              destprocu,destindu,nv,nu,v,u);
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+          destprocu,destindu,nv,nu,v,u);
     bsp_sync();
     time2= bsp_time();
     
     if (s==0){
         printf("End of matrix-vector multiplications.\n");
         printf("Initialization took only %.6lf seconds.\n",time1-time0);
-        printf("Each matvec took only %.6lf seconds.\n", 
-                      (time2-time1)/(double)NITERS);
+        printf("Matvec took only %.6lf seconds.\n", 
+                      (time2-time1));
         printf("The computed solution is:\n");
         fflush(stdout);
     }
