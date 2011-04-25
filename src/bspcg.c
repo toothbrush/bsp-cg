@@ -8,6 +8,16 @@
 #define EPS (1.0E-12)
 #define KMAX (100)
 
+// ---- BEGIN DEBUG OUTPUT ----
+#define STRINGIFY( in ) #in
+#define MACROTOSTRING( in ) STRINGIFY( in )
+//use the AT macro to insert the current file name and line
+#define AT __FILE__ ":" MACROTOSTRING(__LINE__)
+#define HERE_NOP( ... ) out ( -1 , AT, __VA_ARGS__ )
+#define HERE( ... ) out( s, AT, __VA_ARGS__ )
+// ---- END DEBUG OUTPUT ----
+
+
 /* This is a test program which uses bspmv to multiply a 
    sparse matrix A and a dense vector u to obtain a dense vector v.
    The sparse matrix and its distribution
@@ -33,9 +43,12 @@ void bspmv_test(){
     double *a, *v, *u, time0, time1, time2;
 
     bsp_begin(P);
+
     p= bsp_nprocs(); /* p=P */
     s= bsp_pid();
     
+    HERE("Start of BSP section.\n");
+
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
 
@@ -48,8 +61,8 @@ void bspmv_test(){
     bspinputvec(p,s,ufilename,&n,&nu,&uindex);
 
     if (s==0){
-        out("Sparse matrix-vector multiplication");
-        out(" using %d processors\n",p);
+        HERE("Sparse matrix-vector multiplication\n");
+        HERE(" using %d processors\n",p);
     }
 
     /* Initialize input vector v */
@@ -63,7 +76,7 @@ void bspmv_test(){
     u= vecallocd(nu);
     
     if (s==0){
-        out("Initialization for matrix-vector multiplications\n");
+        HERE("Initialization for matrix-vector multiplications\n");
         fflush(stdout);
     }
     bsp_sync(); 
@@ -117,7 +130,7 @@ void bspmv_test(){
             scalevec(n,beta,pold);
             addvec(n,pvec, r, pold); //TODO hmmmmmm p modified!
         }
-        out("Iteration %d.\n", k);
+        HERE("Iteration %d.\n", k);
 
         bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
                srcprocv, srcindv, destprocu, destindu ); // output
@@ -142,28 +155,28 @@ void bspmv_test(){
     time2= bsp_time();
     
     if (s==0){
-        out("End of matrix-vector multiplications.\n");
-        out("Initialization took only %.6lf seconds.\n",time1-time0);
-        out("CG took only %.6lf seconds.\n",           (time2-time1));
-        out("The computed solution is:\n");
+        HERE("End of matrix-vector multiplications.\n");
+        HERE("Initialization took only %.6lf seconds.\n",time1-time0);
+        HERE("CG took only %.6lf seconds.\n",           (time2-time1));
+        HERE("The computed solution is:\n");
         fflush(stdout);
     }
 
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        out("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
+        HERE("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
     }
 
     if (s==0) {
-        out("Checksumming to follow.\n");
-        out("A.u\t\tv (should be equal)\n");
+        HERE("Checksumming to follow.\n");
+        HERE("A.u\t\tv (should be equal)\n");
     }
 
     bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
                srcprocv, srcindv, destprocu, destindu ); // output
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,w);
     for(i=0; i<nu; i++) {
-        out("%lf\t\t%lf\n",w[i],v[i]);
+        HERE("%lf\t\t%lf\n",w[i],v[i]);
     }
     
     vecfreei(destindu); vecfreei(destprocu); 
@@ -182,8 +195,8 @@ int main(int argc, char **argv){
     P = bsp_nprocs();
 
     if(argc != 5){
-        out("Usage:\n");
-        out("\t%s [mtx-dist] [v-dist] [u-dist] [v-vals]\n\n", argv[0]);
+        HERE_NOP("Usage:\n");
+        HERE_NOP("\t%s [mtx-dist] [v-dist] [u-dist] [v-vals]\n\n", argv[0]);
         exit(1);
     }
 

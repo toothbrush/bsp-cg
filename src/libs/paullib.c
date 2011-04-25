@@ -46,12 +46,14 @@ void addvec(int n, double* dest, double* a, double*b)
  *
  * or whatever. 
  */
-void out(const char *fmt, ...)
+void out(int proc, char*at, const char *fmt, ...)
 {
     va_list argp;
     va_start(argp, fmt);
 
-    vfprintf(stderr, fmt, argp);
+    char extended_fmt[1024];
+    sprintf(extended_fmt, "%s (P%d) -- \t%s", at, proc, fmt);
+    vfprintf(stderr, extended_fmt, argp);
 
     va_end(argp);
 }
