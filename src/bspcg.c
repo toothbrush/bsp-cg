@@ -51,14 +51,18 @@ void bspmv_test(){
 
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
+    HERE("Done reading matrix file.\n");
 
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
+    HERE("Done converting to ICRS.\n");
     vecfreei(ja);
     
     /* Read vector distributions */
     bspinputvec(p,s,vfilename,&n,&nv,&vindex);
+    HERE("Loaded distribution vec v.\n");
     bspinputvec(p,s,ufilename,&n,&nu,&uindex);
+    HERE("Loaded distribution vec u.\n");
 
     if (s==0){
         HERE("Sparse matrix-vector multiplication\n");
@@ -70,6 +74,7 @@ void bspmv_test(){
 
     /* Fill input vector with values */
     readvalues(valuesfilename,nv,v);
+    HERE("Loaded values vec v.\n");
 
     // postcondition: (not yet achieved)
     // u s.t. Au = v
