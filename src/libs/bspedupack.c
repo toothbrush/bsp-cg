@@ -18,6 +18,7 @@ double *vecallocd(int n){
         if (pd==NULL)
             bsp_abort("vecallocd: not enough memory");
     }
+    printf("Pointer == %p, value1= %lf\n", pd, pd[0]);
     return pd;
 
 } /* end vecallocd */
@@ -36,7 +37,7 @@ ulong *vecalloculi(ulong n)
     }
     return pi;
 
-} /* end vecalloci */
+} /* end vecalloculi */
 int *vecalloci(int n){
     /* This function allocates a vector of integers of length n */
     int *pi;

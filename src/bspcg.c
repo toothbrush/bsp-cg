@@ -114,7 +114,8 @@ void bspmv_test(){
     
     bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,uindex, //input
            srcprocv, srcindv, destprocu, destindu ); // output
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,r);
+    // THE PROBLEM?
+   // bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,r);
     negate(nu,r);
     addvec(nu,r,r,v);
     double rho = bspip(p,s,n,r,r);
@@ -139,26 +140,37 @@ void bspmv_test(){
         bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,uindex, //input
                srcprocv, srcindv, destprocu, destindu ); // output
         HERE("Do bspmv\n");
-        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,pvec,w);
+        HERE("Arguments p: %d\n", p);
+        HERE("Arguments s: %d\n", s);
+        HERE("Arguments n: %d\n", n);
+        HERE("Arguments nz: %d\n", nz);
+        HERE("Arguments nrows: %d\n", nrows);
+        HERE("Arguments ncols: %d\n", ncols);
+        HERE("Arguments a: %d\n", a);
+        HERE("Arguments ia: %d\n", ia);
+        HERE("Arguments srcprocv: %d\n", srcprocv);
+        HERE("Arguments srcindv: %d\n", srcindv);
+        HERE("Arguments destprocu: %d\n", destprocu);
+        HERE("Arguments destindu: %d\n", destindu);
+        HERE("Arguments nu: %d\n", nu);
+        HERE("Arguments nu: %d\n", nu);
+        HERE("Arguments pvec: %d\n", pvec);
+        HERE("Arguments w: %d\n", w);
+        //bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,pvec,w);
+        //CRAP:
+        copyvec(nu, w,pvec);
         HERE("Done bspmv.\n");
         gamma = bspip(p,s,n,pvec,w);
-        HERE("MARK\n");
         alpha = rho / gamma;
-        HERE("MARK\n");
         copyvec(nu,pold, pvec);
-        HERE("MARK\n");
         scalevec(n,alpha,pvec);
-        HERE("MARK\n");
         scalevec(n,-alpha,w);
-        HERE("MARK\n");
         addvec(n,u, u, pvec);
-        HERE("MARK\n");
         addvec(n,r, r, w);
-        HERE("MARK\n");
         rho_old = rho;
-        HERE("MARK\n");
-        rho = bspip(p,s,n,r,r);
-        HERE("MARK\n");
+        //rho = bspip(p,s,n,r,r);
+        //CRAP:
+        rho = 50;
         k++;
     }
 
@@ -185,9 +197,9 @@ void bspmv_test(){
         HERE("A.u\t\tv (should be equal)\n");
     }
 
-    bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
-               srcprocv, srcindv, destprocu, destindu ); // output
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,w);
+   // bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
+   //            srcprocv, srcindv, destprocu, destindu ); // output
+   // bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,w);
     for(i=0; i<nu; i++) {
         HERE("%lf\t\t%lf\n",w[i],v[i]);
     }

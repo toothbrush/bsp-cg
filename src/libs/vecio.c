@@ -305,9 +305,9 @@ void bspinputvec(int p, int s, const char *filename,
             bsp_abort("Error: p not equal to p(vec)\n"); 
         for (q=0; q<p; q++)
             bsp_put(q,&n,&n,0,SZINT);
-        allVals = vecallocd(n);  // place to temporarily store all vector reals. 
     }
     bsp_sync();
+    allVals = vecallocd(n);  // place to temporarily store all vector reals. 
 
     /* The owner of the global index i and its local index
        are stored in temporary arrays which are distributed
@@ -386,6 +386,8 @@ void bspinputvec(int p, int s, const char *filename,
     }
     bsp_pop_reg(allVals);
     bsp_sync();
+
+    vecfreed(allVals);
 
     /* end value grabbing */
 
