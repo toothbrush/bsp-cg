@@ -4,6 +4,15 @@
 #include "bspedupack.h"
 #include "paullib.h"
 
+// ---- BEGIN DEBUG OUTPUT ----
+#define STRINGIFY( in ) #in
+#define MACROTOSTRING( in ) STRINGIFY( in )
+//use the AT macro to insert the current file name and line
+#define AT __FILE__ ":" MACROTOSTRING(__LINE__)
+#define HERE_NOP( ... ) out ( -1 , AT, __VA_ARGS__ )
+#define HERE( ... ) out( s, AT, __VA_ARGS__ )
+// ---- END DEBUG OUTPUT ----
+
 void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz, 
                      int **pia, int **pja, double **pa){
   
@@ -250,22 +259,9 @@ void triple2icrs(int n, int nz, int *ia,  int *ja, double *a,
    
 } /* end triple2icrs */
 
-void readvalues(const char *fn, int nv, double*v)
-{
-
-    FILE *fp;
-
-    // if s==0 ?????
-
-    fp=fopen(fn,"r");
-    int i;
-    for(i=0; i<nv; i++)
-        fscanf(fp,"%lf\n", &v[i]);
-
-    fclose(fp);
-}
 void bspinputvec(int p, int s, const char *filename,
-                 int *pn, int *pnv, int **pvindex){
+                 int *pn, int *pnv, int **pvindex,
+                 double **pvalues){
   
     /* This function reads the distribution of a dense vector v
        from the input file and initializes the corresponding local
@@ -292,6 +288,8 @@ void bspinputvec(int p, int s, const char *filename,
         *tmpproc, *tmpind, *Nv, *vindex;
     FILE *fp;
 
+    double *allVals;
+
     bsp_push_reg(&n,SZINT);
     bsp_push_reg(&nv,SZINT);
     bsp_sync();
@@ -305,6 +303,7 @@ void bspinputvec(int p, int s, const char *filename,
             bsp_abort("Error: p not equal to p(vec)\n"); 
         for (q=0; q<p; q++)
             bsp_put(q,&n,&n,0,SZINT);
+        allVals = vecallocd(n);  // place to temporarily store all vector reals. 
     }
     bsp_sync();
 
@@ -334,10 +333,11 @@ void bspinputvec(int p, int s, const char *filename,
                temporary location. This is done n/p components
                at a time to save memory  */
             for(k=q*b; k<(q+1)*b && k<n; k++){
-                fscanf(fp,"%d %d\n", &i, &proc);
+                fscanf(fp,"%d %d %lf\n", &i, &proc, &allVals[k]); // also save value
                 /* Convert index and processor number to ranges
                    0..n-1 and 0..p-1, assuming they were
                    1..n and 1..p */
+
                 i--;  
                 proc--;
                 ind= Nv[proc];
@@ -357,7 +357,6 @@ void bspinputvec(int p, int s, const char *filename,
         vecfreei(Nv);
     }
     bsp_sync();
-        
     /* Store the components at their final destination */
     vindex= vecalloci(nv);  
     bsp_push_reg(vindex,nv*SZINT);
@@ -373,8 +372,24 @@ void bspinputvec(int p, int s, const char *filename,
     vecfreei(tmpind);
     vecfreei(tmpproc);
 
+    /* grab reals from P0 */
+
+    bsp_push_reg(allVals, n*SZDBL);
+    bsp_sync();
+    double *values = vecallocd(nv);
+
+    for ( k = 0; k< nv; k++)
+    {
+        bsp_get(0, allVals, vindex[k]*SZDBL, &values[k], SZDBL);
+    }
+    bsp_pop_reg(allVals);
+    bsp_sync();
+
+    /* end value grabbing */
+
     *pn= n;
     *pnv= nv;
     *pvindex= vindex;
+    *pvalues= values;
 
 } /* end bspinputvec */

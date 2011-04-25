@@ -32,7 +32,7 @@
 
 int P;
 
-char vfilename[STRLEN], ufilename[STRLEN], valuesfilename[STRLEN], matrixfile[STRLEN];
+char vfilename[STRLEN], ufilename[STRLEN], matrixfile[STRLEN];
 
 void bspmv_test(){
 
@@ -58,26 +58,29 @@ void bspmv_test(){
     vecfreei(ja);
     
     /* Read vector distributions */
-    bspinputvec(p,s,vfilename,&n,&nv,&vindex);
+    bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
     HERE("Loaded distribution vec v.\n");
-    bspinputvec(p,s,ufilename,&n,&nu,&uindex);
+    bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
     HERE("Loaded distribution vec u.\n");
+
+    /*
+    for(i=0; i<nu; i++){
+        iglob=uindex[i];
+        HERE("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
+    }
+    for(i=0; i<nv; i++){
+        iglob=vindex[i];
+        HERE("proc=%d i=%d, v=%lf \n",s,iglob,v[i]);
+    }
+    */
 
     if (s==0){
         HERE("Sparse matrix-vector multiplication\n");
         HERE(" using %d processors\n",p);
     }
 
-    /* Initialize input vector v */
-    v= vecallocd(nv);
-
-    /* Fill input vector with values */
-    readvalues(valuesfilename,nv,v);
-    HERE("Loaded values vec v.\n");
-
     // postcondition: (not yet achieved)
     // u s.t. Au = v
-    u= vecallocd(nu);
     
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
@@ -106,10 +109,6 @@ void bspmv_test(){
     time1= bsp_time();
 
     int k;
-    for(i = 0; i < nu; i++)
-    {
-        u[i] = 0.0; // our best guess.
-    }
 
     k = 0; // iteration number
     double* r = vecallocd(nu);
@@ -132,7 +131,7 @@ void bspmv_test(){
         } else {
             beta = rho/rho_old;
             scalevec(n,beta,pold);
-            addvec(n,pvec, r, pold); //TODO hmmmmmm p modified!
+            addvec(n,pvec, r, pold); //TODO hmmmmmm p modified! ???
         }
         HERE("Iteration %d.\n", k);
 
@@ -151,10 +150,8 @@ void bspmv_test(){
         k++;
     }
 
-    // here u should be correct
-    
     // end heavy lifting.
-    //
+
     bsp_sync();
     time2= bsp_time();
     
@@ -198,16 +195,15 @@ int main(int argc, char **argv){
     bsp_init(bspmv_test, argc, argv);
     P = bsp_nprocs();
 
-    if(argc != 5){
+    if(argc != 4){
         HERE_NOP("Usage:\n");
-        HERE_NOP("\t%s [mtx-dist] [v-dist] [u-dist] [v-vals]\n\n", argv[0]);
+        HERE_NOP("\t%s [mtx-dist] [v-dist] [u-dist]\n\n", argv[0]);
         exit(1);
     }
 
     strcpy(matrixfile, argv[1]);
     strcpy(vfilename, argv[2]);
     strcpy(ufilename, argv[3]);
-    strcpy(valuesfilename, argv[4]);
 
     bspmv_test();
     exit(0);
