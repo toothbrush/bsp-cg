@@ -1,0 +1,20 @@
+QUESTIONS
+
+* Distribution v?
+* Distribution x? Same as v.
+* Distribution r? Same as v.
+* Distribution p? Same as v. 
+* Distribution w? Same as v.
+* motivate above choices
+* Time complexity
+
+* implement bspcg using bspmv and bspip
+
+* write test matrix generator. assertions on this matrix
+* use Mondriaan to distribute this matrix (and vectors??)
+
+* experiment and explain. 
+* try different n and p and nonzero densities
+* runtime of bspcg scale with p?
+* what is bottleneck?
+* is nItersNeeded dependent on P and distribution?
