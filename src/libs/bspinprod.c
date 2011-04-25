@@ -47,7 +47,7 @@ void bspinprod(){
     p= bsp_nprocs(); /* p = number of processors obtained */ 
     s= bsp_pid();    /* s = processor number */ 
     if (s==0){
-        printf("Please enter n:\n"); fflush(stdout);
+        out("Please enter n:\n"); fflush(stdout);
         scanf("%d",&n);
         if(n<0)
             bsp_abort("Error in input: n is negative");
@@ -72,10 +72,10 @@ void bspinprod(){
     bsp_sync();  
     time1=bsp_time();
 
-    printf("Processor %d: sum of squares up to %d*%d is %.lf\n",
+    out("Processor %d: sum of squares up to %d*%d is %.lf\n",
             s,n,n,alpha); fflush(stdout);
     if (s==0){
-        printf("This took only %.6lf seconds.\n", time1-time0);
+        out("This took only %.6lf seconds.\n", time1-time0);
         fflush(stdout);
     }
 

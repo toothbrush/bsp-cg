@@ -56,7 +56,7 @@ void bspinput2triple(int p, int s, int *pnA, int *pnz,
 
     if (s==0){
         /* Open the matrix file and read the header */
-        printf("Please enter the filename of the matrix distribution\n");
+        out("Please enter the filename of the matrix distribution\n");
         scanf("%s",filename);
         fp=fopen(filename,"r");
 
