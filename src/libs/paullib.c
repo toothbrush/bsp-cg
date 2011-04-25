@@ -9,14 +9,32 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-void negate(double* v)
+void negate(int n, double* v)
 {
-
+    int i;
+    for(i = 0; i<n; i++)
+        v[i] *= -1;
+    
 }
 
-void copyvec(double* dest, double* src)
+void copyvec(int n, double* dest, double* src)
 {
-
+    int i;
+    for(i = 0; i<n; i++)
+        dest[i] = src[i];
+    
+}
+void scalevec(int n, double factor, double*vec)
+{
+    int i;
+    for(i = 0; i<n; i++)
+        vec[i] *= factor;
+}
+void addvec(int n, double* dest, double* a, double*b)
+{
+    int i;
+    for(i = 0; i<n; i++)
+        dest[i] = a[i] + b[i];
 }
 
 /*
