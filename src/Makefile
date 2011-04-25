@@ -1,5 +1,5 @@
 CC= mpicc
-CFLAGS= -pg -Wall
+CFLAGS= -g -Wall
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
 # the objects required to build the final executable CG
