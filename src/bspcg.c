@@ -45,19 +45,19 @@ void bspmv_test(){
     
     /* Read vector distributions */
     if (s==0){
-        printf("Please enter the filename of the v-vector distribution\n");
+        out("Please enter the filename of the v-vector distribution\n");
         scanf("%s",vfilename);
     }
     bspinputvec(p,s,vfilename,&n,&nv,&vindex);
 
     if (s==0){ 
-        printf("Please enter the filename of the u-vector distribution\n");
+        out("Please enter the filename of the u-vector distribution\n");
         scanf("%s",ufilename);
     }
     bspinputvec(p,s,ufilename,&n,&nu,&uindex);
     if (s==0){
-        printf("Sparse matrix-vector multiplication");
-        printf(" using %d processors\n",p);
+        out("Sparse matrix-vector multiplication");
+        out(" using %d processors\n",p);
     }
 
     /* Initialize input vector v */
@@ -65,7 +65,7 @@ void bspmv_test(){
 
     /* Fill input vector with values */
     if (s==0){
-        printf("Finally enter the name of the file containing v's values\n");
+        out("Finally enter the name of the file containing v's values\n");
         scanf("%s", valuesfilename);
     }
     readvalues(valuesfilename,nv,v);
@@ -75,7 +75,7 @@ void bspmv_test(){
     u= vecallocd(nu);
     
     if (s==0){
-        printf("Initialization for matrix-vector multiplications\n");
+        out("Initialization for matrix-vector multiplications\n");
         fflush(stdout);
     }
     bsp_sync(); 
@@ -93,7 +93,6 @@ void bspmv_test(){
     //bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
     //           srcprocv,srcindv,destprocu,destindu);
 
-    // x <=> u
     //
     //EXAMPLE of Av: result goes into u. 
     //bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
@@ -130,6 +129,7 @@ void bspmv_test(){
             scalevec(n,beta,pold);
             addvec(n,pvec, r, pold); //TODO hmmmmmm p modified!
         }
+        out("Iteration %d.\n", k);
 
         bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
                srcprocv, srcindv, destprocu, destindu ); // output
@@ -146,9 +146,7 @@ void bspmv_test(){
         k++;
     }
 
-    // here x should be correct
-
-    
+    // here u should be correct
     
     // end heavy lifting.
     //
@@ -156,17 +154,28 @@ void bspmv_test(){
     time2= bsp_time();
     
     if (s==0){
-        printf("End of matrix-vector multiplications.\n");
-        printf("Initialization took only %.6lf seconds.\n",time1-time0);
-        printf("Matvec took only %.6lf seconds.\n", 
-                      (time2-time1));
-        printf("The computed solution is:\n");
+        out("End of matrix-vector multiplications.\n");
+        out("Initialization took only %.6lf seconds.\n",time1-time0);
+        out("CG took only %.6lf seconds.\n",           (time2-time1));
+        out("The computed solution is:\n");
         fflush(stdout);
     }
 
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        printf("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
+        out("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
+    }
+
+    if (s==0) {
+        out("Checksumming to follow.\n");
+        out("A.u\t\tv (should be equal)\n");
+    }
+
+    bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
+               srcprocv, srcindv, destprocu, destindu ); // output
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,w);
+    for(i=0; i<nu; i++) {
+        out("%lf\t\t%lf\n",w[i],v[i]);
     }
     
     vecfreei(destindu); vecfreei(destprocu); 
@@ -182,11 +191,11 @@ void bspmv_test(){
 int main(int argc, char **argv){
  
     bsp_init(bspmv_test, argc, argv);
-    printf("How many processors do you want to use?\n");
+    out("How many processors do you want to use?\n");
     scanf("%d",&P);
     if (P>bsp_nprocs()){
-        printf("Not enough processors available:");
-        printf(" %d wanted, %d available\n", P, bsp_nprocs());
+        out("Not enough processors available:");
+        out(" %d wanted, %d available\n", P, bsp_nprocs());
         exit(1);
     }
     bspmv_test();
