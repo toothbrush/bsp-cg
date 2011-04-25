@@ -54,8 +54,17 @@ void out(int proc, char*at, const char *fmt, ...)
     char extended_fmt[1024];
     // may be a bit hacky, but this gives different colours to different proc's output.
     // only possible on POSIX I'm afraid. Untested on anything but Linux+zsh as yet. 
-    sprintf(extended_fmt, "\e[0;%dm%s (P%d) -- \t%s\e[0m", 31+proc, at, proc, fmt);
+    if(proc == -1) {
+        sprintf(extended_fmt, "%s (P.) -- \t%s", at, fmt);
+    } else {
+        sprintf(extended_fmt, "\e[0;%dm%s (P%d) -- \t%s\e[0m", 31+proc, at, proc, fmt);
+    }
+
+#ifdef DEBUG
     vfprintf(stderr, extended_fmt, argp);
+#else
+    vfprintf(stderr, fmt, argp);
+#endif
 
     va_end(argp);
 }
