@@ -112,17 +112,18 @@ void bspmv_test(){
     k = 0; // iteration number
     double* r = vecallocd(nu);
     
-    bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,vindex,uindex, //input
+    bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,uindex, //input
            srcprocv, srcindv, destprocu, destindu ); // output
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,r);
     negate(nu,r);
     addvec(nu,r,r,v);
     double rho = bspip(p,s,n,r,r);
     double alpha,gamma,rho_old,beta;
+    rho_old = 0; // just kills a warning.
 
-    double *pvec = vecallocd(n);
-    double *pold = vecallocd(n);
-    double *w = vecallocd(n);
+    double *pvec = vecallocd(nu);
+    double *pold = vecallocd(nu);
+    double *w = vecallocd(nu);
 
     while(sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v)) && k < KMAX) {
         if(k == 0) {
@@ -134,18 +135,30 @@ void bspmv_test(){
         }
         HERE("Iteration %d.\n", k);
 
-        bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
+        HERE("Do bspmv_init\n");
+        bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,uindex, //input
                srcprocv, srcindv, destprocu, destindu ); // output
+        HERE("Do bspmv\n");
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,pvec,w);
+        HERE("Done bspmv.\n");
         gamma = bspip(p,s,n,pvec,w);
+        HERE("MARK\n");
         alpha = rho / gamma;
+        HERE("MARK\n");
         copyvec(nu,pold, pvec);
+        HERE("MARK\n");
         scalevec(n,alpha,pvec);
+        HERE("MARK\n");
         scalevec(n,-alpha,w);
+        HERE("MARK\n");
         addvec(n,u, u, pvec);
+        HERE("MARK\n");
         addvec(n,r, r, w);
+        HERE("MARK\n");
         rho_old = rho;
+        HERE("MARK\n");
         rho = bspip(p,s,n,r,r);
+        HERE("MARK\n");
         k++;
     }
 

@@ -5,6 +5,9 @@
 */
 
 double *vecallocd(int n){
+    fflush(stdout);
+    fflush(stderr);
+    printf("Entered vecallocd!\n");
     /* This function allocates a vector of doubles of length n */
     double *pd;
 

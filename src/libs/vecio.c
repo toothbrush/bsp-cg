@@ -3,6 +3,8 @@
 #include <limits.h>
 #include "bspedupack.h"
 #include "paullib.h"
+#include "bspfuncs.h"
+#include "matsort.h"
 
 // ---- BEGIN DEBUG OUTPUT ----
 #define STRINGIFY( in ) #in

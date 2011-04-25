@@ -66,5 +66,7 @@ void out(int proc, char*at, const char *fmt, ...)
     vfprintf(stderr, fmt, argp);
 #endif
 
+    fflush(stderr);
+    fflush(stdout);
     va_end(argp);
 }
