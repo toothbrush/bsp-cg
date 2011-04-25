@@ -95,7 +95,6 @@ void bspmv_test(){
     destprocu= vecalloci(nrows);
     destindu= vecalloci(nrows);
 
-    assert(nu==nv);
     // do the heavy lifting.
     //EXAMPLE of Av: result goes into u.
     //bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
