@@ -35,6 +35,7 @@ void bspmv_test(){
     p= bsp_nprocs(); /* p=P */
     s= bsp_pid();
 
+
     
     /* Input of sparse matrix */
     bspinput2triple(p,s,&n,&nz,&ia,&ja,&a);
@@ -191,13 +192,7 @@ void bspmv_test(){
 int main(int argc, char **argv){
  
     bsp_init(bspmv_test, argc, argv);
-    out("How many processors do you want to use?\n");
-    scanf("%d",&P);
-    if (P>bsp_nprocs()){
-        out("Not enough processors available:");
-        out(" %d wanted, %d available\n", P, bsp_nprocs());
-        exit(1);
-    }
+    P = bsp_nprocs();
     bspmv_test();
     exit(0);
 }
