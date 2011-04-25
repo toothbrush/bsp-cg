@@ -4,7 +4,7 @@
 #include "bspedupack.h"
 #include "paullib.h"
 
-void bspinput2triple(int p, int s, int *pnA, int *pnz, 
+void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz, 
                      int **pia, int **pja, double **pa){
   
     /* This function reads a sparse matrix in distributed
@@ -44,7 +44,6 @@ void bspinput2triple(int p, int s, int *pnA, int *pnz,
     int pA, mA, nA, nzA, nz, q, nzq, k, tagsz, status, *Pstart, *ia, *ja;
     double value, *a;
     indexpair t;
-    char filename[STRLEN];
     FILE *fp;
     
     Pstart= vecalloci(p+1);
@@ -56,8 +55,6 @@ void bspinput2triple(int p, int s, int *pnA, int *pnz,
 
     if (s==0){
         /* Open the matrix file and read the header */
-        out("Please enter the filename of the matrix distribution\n");
-        scanf("%s",filename);
         fp=fopen(filename,"r");
 
         /* A is an mA by nA matrix with nzA nonzeros

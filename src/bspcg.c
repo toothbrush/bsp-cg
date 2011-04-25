@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 #include "libs/bspedupack.h"
 #include "libs/bspfuncs.h"
 #include "libs/vecio.h"
@@ -22,6 +23,7 @@
 
 int P;
 
+char vfilename[STRLEN], ufilename[STRLEN], valuesfilename[STRLEN], matrixfile[STRLEN];
 
 void bspmv_test(){
 
@@ -29,33 +31,22 @@ void bspmv_test(){
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
         *srcprocv, *srcindv, *destprocu, *destindu;
     double *a, *v, *u, time0, time1, time2;
-    char vfilename[STRLEN], ufilename[STRLEN], valuesfilename[STRLEN];
 
     bsp_begin(P);
     p= bsp_nprocs(); /* p=P */
     s= bsp_pid();
-
-
     
     /* Input of sparse matrix */
-    bspinput2triple(p,s,&n,&nz,&ia,&ja,&a);
+    bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
 
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     vecfreei(ja);
     
     /* Read vector distributions */
-    if (s==0){
-        out("Please enter the filename of the v-vector distribution\n");
-        scanf("%s",vfilename);
-    }
     bspinputvec(p,s,vfilename,&n,&nv,&vindex);
-
-    if (s==0){ 
-        out("Please enter the filename of the u-vector distribution\n");
-        scanf("%s",ufilename);
-    }
     bspinputvec(p,s,ufilename,&n,&nu,&uindex);
+
     if (s==0){
         out("Sparse matrix-vector multiplication");
         out(" using %d processors\n",p);
@@ -65,10 +56,6 @@ void bspmv_test(){
     v= vecallocd(nv);
 
     /* Fill input vector with values */
-    if (s==0){
-        out("Finally enter the name of the file containing v's values\n");
-        scanf("%s", valuesfilename);
-    }
     readvalues(valuesfilename,nv,v);
 
     // postcondition: (not yet achieved)
@@ -193,6 +180,18 @@ int main(int argc, char **argv){
  
     bsp_init(bspmv_test, argc, argv);
     P = bsp_nprocs();
+
+    if(argc != 5){
+        out("Usage:\n");
+        out("\t%s [mtx-dist] [v-dist] [u-dist] [v-vals]\n\n", argv[0]);
+        exit(1);
+    }
+
+    strcpy(matrixfile, argv[1]);
+    strcpy(vfilename, argv[2]);
+    strcpy(ufilename, argv[3]);
+    strcpy(valuesfilename, argv[4]);
+
     bspmv_test();
     exit(0);
 }
