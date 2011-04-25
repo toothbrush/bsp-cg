@@ -17,19 +17,18 @@
 #define HERE( ... ) out( s, AT, __VA_ARGS__ )
 // ---- END DEBUG OUTPUT ----
 
-
-/* This is a test program which uses bspmv to multiply a 
-   sparse matrix A and a dense vector u to obtain a dense vector v.
-   The sparse matrix and its distribution
-   are read from an input file.
-   The dense vector v is initialized by the test program.
-   The distribution of v is read from an input file.
-   The distribution of u is read from another input file.
-
-   The output vector is defined by
-       u[i]= (sum: 0<=j<n: a[i][j]*v[j]).
-*/
-
+/*
+ * This program takes as input:
+ *  - a matrix distributed over n processors
+ *  - vector distributions u and v (which processor owns which value)
+ *  - values for vector v (reals)
+ *
+ *  and outputs a vector u such that
+ *  A . u == v
+ *
+ *  by using the conjugate gradient method, generalised to parallel
+ *  as detailed in the documentation. 
+ */
 
 int P;
 
