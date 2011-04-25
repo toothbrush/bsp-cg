@@ -1,6 +1,11 @@
+#include <assert.h>
 #include "libs/bspedupack.h"
 #include "libs/bspfuncs.h"
 #include "libs/vecio.h"
+#include "libs/paullib.h"
+
+#define EPS (1.0E-12)
+#define KMAX (100)
 
 /* This is a test program which uses bspmv to multiply a 
    sparse matrix A and a dense vector u to obtain a dense vector v.
@@ -20,7 +25,7 @@ int P;
 
 void bspmv_test(){
 
-    int s, p, n, nz, i, iglob, nrows, ncols, nv, nu, iter,
+    int s, p, n, nz, i, iglob, nrows, ncols, nv, nu, 
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
         *srcprocv, *srcindv, *destprocu, *destindu;
     double *a, *v, *u, time0, time1, time2;
@@ -82,15 +87,69 @@ void bspmv_test(){
     destprocu= vecalloci(nrows);
     destindu= vecalloci(nrows);
 
+    assert(nu==nv);
     // do the heavy lifting.
-    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
-               srcprocv,srcindv,destprocu,destindu);
+    //EXAMPLE of Av: result goes into u.
+    //bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
+    //           srcprocv,srcindv,destprocu,destindu);
 
+    // x <=> u
+    //
+    //EXAMPLE of Av: result goes into u. 
+    //bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+    //      destprocu,destindu,nv,nu,v,u);
     bsp_sync(); 
     time1= bsp_time();
+
+    int k;
+    for(i = 0; i < nu; i++)
+    {
+        u[i] = 0.0; // our best guess.
+    }
+
+    k = 0; // iteration number
+    double* r = vecallocd(nu);
     
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
-          destprocu,destindu,nv,nu,v,u);
+    bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,vindex,uindex, //input
+           srcprocv, srcindv, destprocu, destindu ); // output
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,r);
+    negate(nu,r);
+    addvec(nu,r,r,v);
+    double rho = bspip(p,s,n,r,r);
+    double alpha,gamma,rho_old,beta;
+
+    double *pvec = vecallocd(n);
+    double *pold = vecallocd(n);
+    double *w = vecallocd(n);
+
+    while(sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v)) && k < KMAX) {
+        if(k == 0) {
+            copyvec(nu, pvec, r) ; // do p <- r;
+        } else {
+            beta = rho/rho_old;
+            scalevec(n,beta,pold);
+            addvec(n,pvec, r, pold); //TODO hmmmmmm p modified!
+        }
+
+        bspmv_init(p,s,n, nrows, ncols, n,n, rowindex,colindex,vindex,uindex, //input
+               srcprocv, srcindv, destprocu, destindu ); // output
+        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,pvec,w);
+        gamma = bspip(p,s,n,pvec,w);
+        alpha = rho / gamma;
+        copyvec(nu,pold, pvec);
+        scalevec(n,alpha,pvec);
+        scalevec(n,-alpha,w);
+        addvec(n,u, u, pvec);
+        addvec(n,r, r, w);
+        rho_old = rho;
+        rho = bspip(p,s,n,r,r);
+        k++;
+    }
+
+    // here x should be correct
+
+    
+    
     // end heavy lifting.
     //
     bsp_sync();
