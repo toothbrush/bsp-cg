@@ -52,7 +52,9 @@ void out(int proc, char*at, const char *fmt, ...)
     va_start(argp, fmt);
 
     char extended_fmt[1024];
-    sprintf(extended_fmt, "%s (P%d) -- \t%s", at, proc, fmt);
+    // may be a bit hacky, but this gives different colours to different proc's output.
+    // only possible on POSIX I'm afraid. Untested on anything but Linux+zsh as yet. 
+    sprintf(extended_fmt, "\e[0;%dm%s (P%d) -- \t%s\e[0m", 31+proc, at, proc, fmt);
     vfprintf(stderr, extended_fmt, argp);
 
     va_end(argp);
