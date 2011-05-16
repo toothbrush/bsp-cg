@@ -6,15 +6,15 @@
 #include "libs/paullib.h"
 
 #define EPS (1.0E-12)
-#define KMAX (100)
+#define KMAX (10)
 
 // ---- BEGIN DEBUG OUTPUT ----
 #define STRINGIFY( in ) #in
 #define MACROTOSTRING( in ) STRINGIFY( in )
 //use the AT macro to insert the current file name and line
 #define AT __FILE__ ":" MACROTOSTRING(__LINE__)
-#define HERE_NOP( ... ) out ( -1 , AT, __VA_ARGS__ )
-#define HERE( ... ) out( s, AT, __VA_ARGS__ )
+#define HERE_NOP( ... ) out( -1, AT, __VA_ARGS__ )
+#define HERE( ... )     out( s , AT, __VA_ARGS__ )
 // ---- END DEBUG OUTPUT ----
 
 /*
@@ -34,7 +34,7 @@ int P;
 
 char vfilename[STRLEN], ufilename[STRLEN], matrixfile[STRLEN];
 
-void bspmv_test(){
+void bspcg(){
 
     int s, p, n, nz, i, iglob, nrows, ncols, nv, nu, 
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
@@ -64,6 +64,7 @@ void bspmv_test(){
     HERE("Loaded distribution vec u.\n");
 
     /*
+    // this seems to work.
     for(i=0; i<nu; i++){
         iglob=uindex[i];
         HERE("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
@@ -79,12 +80,11 @@ void bspmv_test(){
         HERE(" using %d processors\n",p);
     }
 
-    // postcondition: (not yet achieved)
+    // postcondition:
     // u s.t. Au = v
     
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
-        fflush(stdout);
     }
     bsp_sync(); 
     time0= bsp_time();
@@ -112,20 +112,26 @@ void bspmv_test(){
     k = 0; // iteration number
     double* r = vecallocd(nu);
     
-    bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,uindex, //input
+    for (i = 0 ; i < nv; i ++)
+        HERE("uindex[%d]=%d\n", i, uindex[i]);
+
+    bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,vindex, //input
            srcprocv, srcindv, destprocu, destindu ); // output
-    // THE PROBLEM?
-   // bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,u,r);
+    bsp_sync();
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nv,nv,u,r);
+    bsp_sync();
     negate(nu,r);
     addvec(nu,r,r,v);
     double rho = bspip(p,s,n,r,r);
     double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
+    bsp_sync();
 
     double *pvec = vecallocd(nu);
     double *pold = vecallocd(nu);
     double *w = vecallocd(nu);
 
+    bsp_sync();
     while(sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v)) && k < KMAX) {
         if(k == 0) {
             copyvec(nu, pvec, r) ; // do p <- r;
@@ -134,33 +140,20 @@ void bspmv_test(){
             scalevec(n,beta,pold);
             addvec(n,pvec, r, pold); //TODO hmmmmmm p modified! ???
         }
+        bsp_sync();
         HERE("Iteration %d.\n", k);
 
         HERE("Do bspmv_init\n");
         bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,uindex, //input
                srcprocv, srcindv, destprocu, destindu ); // output
         HERE("Do bspmv\n");
-        HERE("Arguments p: %d\n", p);
-        HERE("Arguments s: %d\n", s);
-        HERE("Arguments n: %d\n", n);
-        HERE("Arguments nz: %d\n", nz);
-        HERE("Arguments nrows: %d\n", nrows);
-        HERE("Arguments ncols: %d\n", ncols);
-        HERE("Arguments a: %d\n", a);
-        HERE("Arguments ia: %d\n", ia);
-        HERE("Arguments srcprocv: %d\n", srcprocv);
-        HERE("Arguments srcindv: %d\n", srcindv);
-        HERE("Arguments destprocu: %d\n", destprocu);
-        HERE("Arguments destindu: %d\n", destindu);
-        HERE("Arguments nu: %d\n", nu);
-        HERE("Arguments nu: %d\n", nu);
-        HERE("Arguments pvec: %d\n", pvec);
-        HERE("Arguments w: %d\n", w);
         //bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nu,nu,pvec,w);
         //CRAP:
         copyvec(nu, w,pvec);
+        bsp_sync();
         HERE("Done bspmv.\n");
         gamma = bspip(p,s,n,pvec,w);
+        bsp_sync();
         alpha = rho / gamma;
         copyvec(nu,pold, pvec);
         scalevec(n,alpha,pvec);
@@ -168,9 +161,9 @@ void bspmv_test(){
         addvec(n,u, u, pvec);
         addvec(n,r, r, w);
         rho_old = rho;
-        //rho = bspip(p,s,n,r,r);
-        //CRAP:
-        rho = 50;
+        bsp_sync();
+        rho = bspip(p,s,n,r,r);
+        copyvec(nu, w,pvec);
         k++;
     }
 
@@ -184,7 +177,6 @@ void bspmv_test(){
         HERE("Initialization took only %.6lf seconds.\n",time1-time0);
         HERE("CG took only %.6lf seconds.\n",           (time2-time1));
         HERE("The computed solution is:\n");
-        fflush(stdout);
     }
 
     for(i=0; i<nu; i++){
@@ -203,7 +195,11 @@ void bspmv_test(){
     for(i=0; i<nu; i++) {
         HERE("%lf\t\t%lf\n",w[i],v[i]);
     }
+    bsp_sync();
     
+    vecfreed(w);        vecfreed(pvec);
+    vecfreed(r);        vecfreed(pold);
+
     vecfreei(destindu); vecfreei(destprocu); 
     vecfreei(srcindv);  vecfreei(srcprocv); 
     vecfreed(u);        vecfreed(v);
@@ -212,11 +208,11 @@ void bspmv_test(){
     vecfreei(ia);       vecfreed(a);
     bsp_end();
     
-} /* end bspmv_test */
+} /* end bspcg */
 
 int main(int argc, char **argv){
  
-    bsp_init(bspmv_test, argc, argv);
+    bsp_init(bspcg, argc, argv);
     P = bsp_nprocs();
 
     if(argc != 4){
@@ -229,6 +225,6 @@ int main(int argc, char **argv){
     strcpy(vfilename, argv[2]);
     strcpy(ufilename, argv[3]);
 
-    bspmv_test();
+    bspcg();
     exit(0);
 }
