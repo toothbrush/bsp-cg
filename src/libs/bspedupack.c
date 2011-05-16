@@ -5,9 +5,6 @@
 */
 
 double *vecallocd(int n){
-    fflush(stdout);
-    fflush(stderr);
-    printf("Entered vecallocd!\n");
     /* This function allocates a vector of doubles of length n */
     double *pd;
 
@@ -18,7 +15,6 @@ double *vecallocd(int n){
         if (pd==NULL)
             bsp_abort("vecallocd: not enough memory");
     }
-    printf("Pointer == %p, value1= %lf\n", pd, pd[0]);
     return pd;
 
 } /* end vecallocd */
