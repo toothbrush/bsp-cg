@@ -135,7 +135,6 @@ void bspmv_init(int p, int s, int n, int nrows, int ncols,
        srcprocv, srcindv, destprocu, destindu are the same as in bspmv.
     */
 
-    int nloc(int p, int s, int n);
     int np, i, j, iglob, jglob, *tmpprocv, *tmpindv, *tmpprocu, *tmpindu;
 
     /****** Superstep 0. Allocate and register temporary arrays */
