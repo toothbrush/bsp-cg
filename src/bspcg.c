@@ -6,7 +6,7 @@
 #include "libs/paullib.h"
 
 #define EPS (1.0E-12)
-#define KMAX (10)
+#define KMAX (100)
 
 // ---- BEGIN DEBUG OUTPUT ----
 #define STRINGIFY( in ) #in
