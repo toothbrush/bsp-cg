@@ -14,16 +14,37 @@ void negate(int n, double* v)
     int i;
     for(i = 0; i<n; i++)
         v[i] *= -1;
-    
+
 }
 
-void copyvec(int n, double* dest, double* src)
+void copyvec(int n, double* src,
+                    double* dest)
 {
     int i;
-    for(i = 0; i<n; i++)
+    for(i = 0; i<n; i++) {
         dest[i] = src[i];
-    
+      //  Vindex[i] = vindex[i];
+      //  Nv = nv; N = n;
+    }
+
 }
+
+void zero (int nv, double * a)
+{
+    int i;
+    for (i = 0; i < nv; i++)
+        a[i] = 0;
+}
+
+void axpy (int nv, double a, double* x, double* y,double* result) {
+
+    int i;
+    for (i = 0; i< nv; i++) {
+        result[i] = a * x[i] + y[i];
+    }
+
+}
+
 void scalevec(int n, double factor, double*vec)
 {
     int i;
@@ -44,7 +65,7 @@ void addvec(int n, double* dest, double* a, double*b)
  *
  * $ gen-matrix | proc-matrix | print-matrix
  *
- * or whatever. 
+ * or whatever.
  */
 void out(int proc, char*at, const char *fmt, ...)
 {
@@ -53,7 +74,8 @@ void out(int proc, char*at, const char *fmt, ...)
 
     char extended_fmt[1024];
     // may be a bit hacky, but this gives different colours to different proc's output.
-    // only possible on POSIX I'm afraid. Untested on anything but Linux+zsh as yet. 
+    // only possible on POSIX I'm afraid. Untested on anything but Linux+zsh as yet.
+    // Turns out OS X also does the trick.
     if(proc == -1) {
         sprintf(extended_fmt, "%s (P.) -- \t%s", at, fmt);
     } else {
