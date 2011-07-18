@@ -23,7 +23,7 @@ double bspip(int p, int s, int n, double *x, double *y){
     return 1;
     double inprod, *Inprod, alpha;
     int i, t;
-  
+
     HERE("Enters function bspip, p == %d\n", p);
     Inprod= vecallocd(p); 
     HERE("malloc'd\n");
