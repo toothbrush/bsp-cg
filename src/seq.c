@@ -1,5 +1,5 @@
 #define N 2
-#define EPS (10E-4)
+#define EPS (10E-8)
 #define K_MAX 10
 
 #include "stdio.h"
@@ -62,7 +62,8 @@ void mv(double** A, double *u, double*res) {
     for(i=0;i<N;i++) {
         res[i] = 0;
         for(j=0;j<N;j++) {
-            res[i] += A[i][j] * u[i];
+            res[i] += A[i][j] * u[j];
+            //printf("component A[%d][%d]*u[%d]=%lf\n", i,j,j,A[i][j] * u[j]);
         }
     }
 }
@@ -99,6 +100,7 @@ void cg_test() {
     for(i=0;i<N;i++)
         u[i] = 0;
 
+    
     // start 'heavy lifting'
 
     int k = 0; // iteration number
@@ -120,7 +122,7 @@ void cg_test() {
             k < K_MAX)
     {
         if(k==0) {
-            copy(p,r);
+            copy(r,p);
         } else {
             beta = rho/rho_old;
             scale(beta, p, p);
