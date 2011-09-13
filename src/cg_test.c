@@ -9,7 +9,7 @@
 #include "libs/paullib.h"
 
 #define EPS (1.0E-12)
-#define KMAX (100)
+#define KMAX (10)
 
 // ---- BEGIN DEBUG OUTPUT ----
 #define STRINGIFY( in ) #in
@@ -133,6 +133,8 @@ void bspcg(){
     double *pold = vecallocd(nu);
     double *w    = vecallocd(nu);
 
+    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
+               srcprocv,srcindv,destprocu,destindu);
     while ( k < KMAX &&
             sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v))) {
         if ( k == 0 ) {
@@ -142,9 +144,7 @@ void bspcg(){
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
         }
-
-        bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
-                   srcprocv,srcindv,destprocu,destindu);
+        HERE("iteration %d\n", k);
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
               destprocu,destindu,nv,nu,pvec,w);
 

@@ -5,12 +5,16 @@ LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 # the objects required to build the final executable CG
 OBJS=bspedupack.o bspcg.o
 OBJS2=bspedupack.o cg_test.o
+OBJS_SEQ=seq.o
 LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o libs/paullib.o
 
-all: lib cg cg2
+all: lib cg cg2 seq
 
 lib: force-look
 	cd libs; make all
+
+seq: $(OBJS_SEQ) lib
+	gcc -o seq $(OBJS_SEQ) $(LIB_OBJS) -lm
 
 cg2: $(OBJS2) lib
 	$(CC) $(CFLAGS) -o cg2 $(OBJS2) $(LIBOBJS) $(LFLAGS)
