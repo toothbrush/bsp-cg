@@ -8,7 +8,7 @@
 #include "libs/vecio.h"
 #include "libs/paullib.h"
 
-#define EPS (1.0E-12)
+#define EPS (1.0E-9)
 #define KMAX (10)
 
 // ---- BEGIN DEBUG OUTPUT ----

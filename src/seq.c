@@ -100,7 +100,6 @@ void cg_test() {
     for(i=0;i<N;i++)
         u[i] = 0;
 
-    
     // start 'heavy lifting'
 
     int k = 0; // iteration number
