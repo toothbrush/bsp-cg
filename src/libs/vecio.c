@@ -5,15 +5,7 @@
 #include "paullib.h"
 #include "bspfuncs.h"
 #include "matsort.h"
-
-// ---- BEGIN DEBUG OUTPUT ----
-#define STRINGIFY( in ) #in
-#define MACROTOSTRING( in ) STRINGIFY( in )
-//use the AT macro to insert the current file name and line
-#define AT __FILE__ ":" MACROTOSTRING(__LINE__)
-#define HERE_NOP( ... ) out ( -1 , AT, __VA_ARGS__ )
-#define HERE( ... ) out( s, AT, __VA_ARGS__ )
-// ---- END DEBUG OUTPUT ----
+#include "debug.h"
 
 void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz, 
                      int **pia, int **pja, double **pa){

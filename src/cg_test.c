@@ -7,18 +7,12 @@
 #include "libs/bspfuncs.h"
 #include "libs/vecio.h"
 #include "libs/paullib.h"
+#include "libs/debug.h"
 
 #define EPS (1.0E-9)
-#define KMAX (1)
+#define KMAX (3)
 
-// ---- BEGIN DEBUG OUTPUT ----
-#define STRINGIFY( in ) #in
-#define MACROTOSTRING( in ) STRINGIFY( in )
-//use the AT macro to insert the current file name and line
-#define AT __FILE__ ":" MACROTOSTRING(__LINE__)
-#define HERE_NOP( ... ) out( -1, AT, __VA_ARGS__ )
-#define HERE( ... )     out( s , AT, __VA_ARGS__ )
-// ---- END DEBUG OUTPUT ----
+#define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
 /*
  * This program takes as input:
@@ -43,6 +37,8 @@ void bspcg(){
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
         *srcprocv, *srcindv, *destprocu, *destindu;
     double *a, *v, *u, time0, time1, time2;
+
+    int counter0;
 
     bsp_begin(P);
 
@@ -132,9 +128,11 @@ void bspcg(){
     negate(nv, r);
     axpy(nv, 1.0, v, r, r);
 
+    DUMP(nv,r);
     //for (i = 0 ; i < nv; i ++)
     //    HERE("uindex[%d]=%d\n", i, uindex[i]);
 
+    printf("p %d, s %d, n %d, r %p\n", p,s,n,r);
     double rho = bspip(p,s,n,r,r);
     double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
@@ -146,6 +144,7 @@ void bspcg(){
 
     while ( k < KMAX &&
             sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v))) {
+        HERE("rho = %lf\n", rho);
         if ( k == 0 ) {
             copyvec(nv,r,pvec);
         } else {

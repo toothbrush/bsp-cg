@@ -1,10 +1,12 @@
 #define N 2
 #define EPS (10E-8)
-#define K_MAX 1
+#define K_MAX 3
 
 #include "stdio.h"
 #include "libs/bspedupack.h"
+#include "libs/debug.h"
 
+#define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) printf("dump array[%d]=%lf\n",counter0, a[counter0])
 void cg_test();
 
 int main(int argc, char** argv) {
@@ -71,7 +73,7 @@ void mv(double** A, double *u, double*res) {
 
 void cg_test() {
 
-    int i;
+    int i, counter0;
     double **A;
     double *u;
     double *v;
@@ -117,9 +119,11 @@ void cg_test() {
     double *p; p = malloc(N*sizeof(double));
     double *w; w = malloc(N*sizeof(double));
 
+    DUMP(N, r);
     while(sqrt(rho) > EPS * sqrt(ip(v,v)) &&
             k < K_MAX)
     {
+        printf("rho = %lf\n", rho);
         if(k==0) {
             copy(r,p);
         } else {
