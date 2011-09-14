@@ -9,8 +9,8 @@
 #include "libs/paullib.h"
 #include "libs/debug.h"
 
-#define EPS (1.0E-9)
-#define KMAX (10)
+#define EPS (10E-8)
+#define KMAX (100)
 
 #define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
@@ -144,7 +144,7 @@ void bspcg(){
 
     while ( k < KMAX &&
             sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v))) {
-        HERE("rho = %lf\n", rho);
+        printf("sqrt(rho) = %lf\n", sqrt(rho));
         if ( k == 0 ) {
             copyvec(nv,r,pvec);
         } else {
@@ -190,7 +190,14 @@ void bspcg(){
 
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        HERE("FINAL ANSWER *** proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
+        HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);
+    }
+    HERE("...which gives, filled in:\n");
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+          destprocu,destindu,nv,nu,u,w);
+    for(i=0; i<nu; i++){
+        iglob=uindex[i];
+        HERE("FINAL ANSWER *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
 
 

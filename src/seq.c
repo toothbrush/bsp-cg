@@ -1,6 +1,6 @@
-#define N 2
-#define EPS (10E-9)
-#define K_MAX (10)
+#define N 3
+#define EPS (10E-8)
+#define K_MAX (100)
 
 #include "stdio.h"
 #include "libs/bspedupack.h"
@@ -90,13 +90,19 @@ void cg_test() {
 
     // fill A and v with values:
 
-    A[0][0] = 4;
-    A[0][1] = 1;
-    A[1][0] = 1;
-    A[1][1] = 3;
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+    A[1][0] = 4;
+    A[1][1] = 5;
+    A[1][2] = 6;
+    A[2][0] = 7;
+    A[2][1] = 8;
+    A[2][2] = 9;
 
-    v[0] = 1;
-    v[1] = 2;
+    v[0] = 11;
+    v[1] = 12;
+    v[2] = 13;
 
     //initialise guess of u:
     for(i=0;i<N;i++)
@@ -123,7 +129,7 @@ void cg_test() {
     while(sqrt(rho) > EPS * sqrt(ip(v,v)) &&
             k < K_MAX)
     {
-        printf("rho = %lf\n", rho);
+        printf("sqrt(rho) = %lf\n", sqrt(rho));
         if(k==0) {
             copy(r,p);
         } else {
@@ -153,6 +159,19 @@ void cg_test() {
     for(i=0;i<N;i++)
         printf("u[%d] = %lf\n", i, u[i]);
 
+    printf("Filling in gives:\n");
+    mv(A,u,p);
+    for(i=0;i<N;i++)
+        printf("A.u[%d] = %lf\n", i, p[i]);
+
+    free(p);
+    free(w);
+    free(r);
+    free(u);
+    free(v);
+    for(i=0;i<N;i++)
+        free(A[i]);
+    free(A);
 
 
 }
