@@ -1,6 +1,6 @@
 #define N 2
 #define EPS (10E-8)
-#define K_MAX 10
+#define K_MAX 1
 
 #include "stdio.h"
 #include "libs/bspedupack.h"

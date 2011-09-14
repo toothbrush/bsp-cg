@@ -9,7 +9,7 @@
 #include "libs/paullib.h"
 
 #define EPS (1.0E-9)
-#define KMAX (10)
+#define KMAX (1)
 
 // ---- BEGIN DEBUG OUTPUT ----
 #define STRINGIFY( in ) #in
@@ -124,7 +124,7 @@ void bspcg(){
     // mv(A,u,r);
     // neg(r);
     // add(v,r,r);
-    // 
+    //
     // => r = v-A.u     ; the residue
     //
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
