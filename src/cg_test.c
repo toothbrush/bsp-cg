@@ -160,8 +160,8 @@ void bspcg(){
 
         alpha = rho/gamma;
 
-        axpy(nv,alpha,pvec,u,   // alpha*p + x
-                           u);  // into x
+        axpy(nv,alpha,pvec,u,   // alpha*p + u
+                           u);  // into u
 
         axpy(nv,-alpha,w,r,
                          r);
