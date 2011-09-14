@@ -90,9 +90,6 @@ void bspcg(){
         HERE(" using %d processors\n",p);
     }
 
-    // postcondition:
-    // u s.t. Au = v
-
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
     }
@@ -119,7 +116,21 @@ void bspcg(){
 
     k = 0; // iteration number
     double* r = vecallocd(nu);
-    zero(nv,r);
+    zero(nu,r);
+    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
+               srcprocv,srcindv,destprocu,destindu);
+    // must we not initialise?
+    //
+    // mv(A,u,r);
+    // neg(r);
+    // add(v,r,r);
+    // 
+    // => r = v-A.u     ; the residue
+    //
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+            destprocu,destindu, nv, nu, u, r);
+    negate(nv, r);
+    axpy(nv, 1.0, v, r, r);
 
     //for (i = 0 ; i < nv; i ++)
     //    HERE("uindex[%d]=%d\n", i, uindex[i]);
@@ -133,8 +144,6 @@ void bspcg(){
     double *pold = vecallocd(nu);
     double *w    = vecallocd(nu);
 
-    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
-               srcprocv,srcindv,destprocu,destindu);
     while ( k < KMAX &&
             sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v))) {
         if ( k == 0 ) {
@@ -144,7 +153,6 @@ void bspcg(){
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
         }
-        HERE("iteration %d\n", k);
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
               destprocu,destindu,nv,nu,pvec,w);
 
@@ -163,9 +171,13 @@ void bspcg(){
 
         k++;
 
+        HERE("iteration %d\n", k);
     }
 
     // end heavy lifting.
+
+    // postcondition:
+    // u s.t. Au = v
 
     bsp_sync();
     time2= bsp_time();
