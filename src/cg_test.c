@@ -10,7 +10,7 @@
 #include "libs/debug.h"
 
 #define EPS (1.0E-9)
-#define KMAX (3)
+#define KMAX (10)
 
 #define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
