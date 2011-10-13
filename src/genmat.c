@@ -24,7 +24,7 @@ int main (int argc, char** argv) {
     int* ys;
     double* vals;
 
-    printf("Generating matrix. N=%d, density=%lf, target nz=%d\n", 
+    printf("Generating matrix. N=%d, density=%lf, target nz=%d\n",
             N, sparsity, nz);
     srand((unsigned)time(NULL));
 
@@ -72,10 +72,42 @@ int main (int argc, char** argv) {
         }
 
     }
+    // now rebuild an array which actually contains those nonzeroes.
 
+    int* fin_i;
+    int* fin_j;
+    double* fin_val;
 
-    // TODO guarantee unicity of (i,j)'s
+    fin_i = vecalloci(uniques);
+    fin_j = vecalloci(uniques);
+    fin_val = vecallocd(uniques);
+    uniques=0;
+    for(v=0;v<nz;v++) {
+        // loop through the array, and for each element, check if the preceding 
+        // portion of the array contains the same (i,j) pair. count first occurrences
+        // of (i,j)'s.
 
+        found=false;
+        for(i=0;i<v;i++) {
+            if(xs[v] == xs[i] &&
+               ys[v] == ys[i]) {
+                found = true;
+                //break
+            }
+        }
+        if(!found) {
+            // copy over.
+
+            fin_i[uniques] = xs[v];
+            fin_j[uniques] = ys[v];
+            fin_val[uniques] = vals[v];
+            printf("kept A[%d][%d]=%lf\n", fin_i[uniques],fin_j[uniques], fin_val[uniques]);
+
+            uniques ++;
+
+        }
+
+    }
 
 
 
@@ -89,6 +121,9 @@ int main (int argc, char** argv) {
     free(xs);
     free(ys);
     free(vals);
+    free(fin_i);
+    free(fin_j);
+    free(fin_val);
 
     return 0;
 }
