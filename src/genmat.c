@@ -24,7 +24,7 @@ int main (int argc, char** argv) {
     int* ys;
     double* vals;
 
-    printf("Generating matrix. N=%d, density=%lf, target nz=%d\n",
+    fprintf(stderr,"Generating matrix. N=%d, density=%lf, target nz=%d\n",
             N, sparsity, nz);
     srand((unsigned)time(NULL));
 
@@ -42,7 +42,7 @@ int main (int argc, char** argv) {
         ys[v]= (double)N * ran();
         vals[v]= ran()*2-1; // [-1,1]
 
-        printf("generated A[%d][%d]=%lf\n", xs[v],ys[v], vals[v]);
+        fprintf(stderr,"generated A[%d][%d]=%lf\n", xs[v],ys[v], vals[v]);
 
     }
 
@@ -63,7 +63,7 @@ int main (int argc, char** argv) {
             if(xs[v] == xs[i] &&
                ys[v] == ys[i]) {
                 found = true;
-                //break
+                break;
             }
         }
         if(!found) {
@@ -92,7 +92,7 @@ int main (int argc, char** argv) {
             if(xs[v] == xs[i] &&
                ys[v] == ys[i]) {
                 found = true;
-                //break
+                break;
             }
         }
         if(!found) {
@@ -112,11 +112,11 @@ int main (int argc, char** argv) {
 
 
     for(v=0;v<uniques;v++)
-        printf("left with A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
+        fprintf(stderr,"left with A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
 
 
 
-    printf("Generated %d nonzeroes\n", uniques);
+    fprintf(stderr,"Generated %d nonzeroes\n", uniques);
 
 
 
@@ -160,6 +160,7 @@ void addTranspose(int* i, int* j, double* v, int nz) {
                     if (i[tx] == done_i[c2] &&
                         j[tx] == done_j[c2]) {
                         already_done = true;
+                        break;
                     }
                 }
 
@@ -173,7 +174,7 @@ void addTranspose(int* i, int* j, double* v, int nz) {
                     done_i[twiddled] = i[c];
                     done_j[twiddled] = j[c];
                     twiddled++;
-                    printf("transpose of (%d,%d)!\n", i[tx], j[tx]);
+                    fprintf(stderr,"transpose of (%d,%d)!\n", i[tx], j[tx]);
                 }
 
             }
@@ -184,7 +185,7 @@ void addTranspose(int* i, int* j, double* v, int nz) {
     }
     free(done_i);
     free(done_j);
-    printf("twiddled = %d\n", twiddled);
+    fprintf(stderr,"twiddled = %d\n", twiddled);
 }
 
 
