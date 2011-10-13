@@ -141,8 +141,9 @@ int main (int argc, char** argv) {
     for(v=0;v<newsize;v++)
         fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
 
+    checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
 
-    fprintf(stderr,"Generated %d nonzeroes\n", uniques);
+    fprintf(stderr,"Left with %d nonzeroes\n", uniques);
 
 
 
@@ -157,6 +158,18 @@ int main (int argc, char** argv) {
     free(diag_val);
 
     return 0;
+}
+
+void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
+{
+
+    for(c = 0; c< N; c++)
+    {
+        for(c2 = 0; c2<N; c2++)
+            
+        rowtotal +=
+
+
 }
 
 int countDiags(int* i, int* j, int nz) {
@@ -188,6 +201,8 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
                 fprintf(stderr, "found a diag.\n");
 
                 v[c2] += mu;
+                if (v[c2] <= 0)
+                    fprintf(stderr, "WARNING: not all diagonals are >0!\n");
 
                 break;
 
