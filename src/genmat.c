@@ -112,8 +112,34 @@ int main (int argc, char** argv) {
 
 
     for(v=0;v<uniques;v++)
-        fprintf(stderr,"left with A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
+        // to make diags stand out.
+        if(fin_i[v]==fin_j[v])
+            fprintf(stderr,"after transpose A[%d][%d]=%lf //\n", fin_i[v],fin_j[v], fin_val[v]);
+        else
+            fprintf(stderr,"after transpose A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
 
+    int diagonals_present = countDiags(fin_i, fin_j, uniques);
+    fprintf(stderr, "found %d diagonal(s), still need %d more.\n", diagonals_present, (N-diagonals_present));
+
+    int newsize = uniques + (N - diagonals_present);
+    int* diag_i;
+    int* diag_j;
+    double* diag_val;
+
+    diag_i = vecalloci(newsize);
+    diag_j = vecalloci(newsize);
+    diag_val = vecallocd(newsize);
+
+    for(v=0; v<uniques; v++) {
+        // copy the old values across
+        diag_i[v]=fin_i[v];
+        diag_j[v]=fin_j[v];
+        diag_val[v]=fin_val[v];
+    }
+
+    addDiagonal(mu, diag_i, diag_j, diag_val, uniques, diagonals_present, N);
+    for(v=0;v<newsize;v++)
+        fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
 
 
     fprintf(stderr,"Generated %d nonzeroes\n", uniques);
@@ -126,10 +152,58 @@ int main (int argc, char** argv) {
     free(fin_i);
     free(fin_j);
     free(fin_val);
+    free(diag_i);
+    free(diag_j);
+    free(diag_val);
 
     return 0;
 }
 
+int countDiags(int* i, int* j, int nz) {
+    int diags=0;
+    int c;
+    for (c=0; c<nz; c++) {
+        if(i[c]==j[c])
+            diags++;
+    }
+
+    return diags;
+}
+
+void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present, int diags_needed) {
+
+    int c,c2;
+    int pos = nz; // where to start appending.
+
+    bool found;
+    // for each diagonal element, check if it exists, if not, append.
+    for(c=1;c<=diags_needed;c++)
+    {
+        found = false;
+        for(c2=0;c2<nz;c2++) {
+            if(i[c2] == j[c2] && // is a diagonal
+               j[c2] == c-1)     // is the diag we are looking for.
+            {
+                found = true;
+                fprintf(stderr, "found a diag.\n");
+
+                v[c2] += mu;
+
+                break;
+
+            }
+        }
+        if (!found) {
+            // append
+            fprintf(stderr, "not found, appending!\n");
+            i[pos] = c-1;
+            j[pos] = c-1;
+            v[pos] = mu;
+            pos++;
+        }
+    }
+
+}
 void addTranspose(int* i, int* j, double* v, int nz) {
 
 
