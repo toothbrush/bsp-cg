@@ -101,7 +101,6 @@ int main (int argc, char** argv) {
             fin_i[uniques] = xs[v];
             fin_j[uniques] = ys[v];
             fin_val[uniques] = vals[v];
-            printf("kept A[%d][%d]=%lf\n", fin_i[uniques],fin_j[uniques], fin_val[uniques]);
 
             uniques ++;
 
@@ -109,8 +108,11 @@ int main (int argc, char** argv) {
 
     }
 
+    addTranspose(fin_i, fin_j, fin_val, uniques);
 
 
+    for(v=0;v<uniques;v++)
+        printf("left with A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
 
 
 
@@ -126,6 +128,63 @@ int main (int argc, char** argv) {
     free(fin_val);
 
     return 0;
+}
+
+void addTranspose(int* i, int* j, double* v, int nz) {
+
+
+    int c,c2;
+    int tx;
+
+    // we have to cache already-added (i,j)'s
+
+    int twiddled=0;
+    int* done_i;
+    int* done_j;
+    done_i = vecalloci(nz);
+    done_j = vecalloci(nz);
+
+    bool already_done;
+    for(c=0; c<nz; c++) {
+        // find transpose, if it exists, add it to current.
+
+        for(tx=0; tx<nz; tx++) {
+
+            if (i[tx] == j[c] &&
+                j[tx] == i[c] &&
+                c != tx // don't double everything!
+                ) {
+
+                already_done = false;
+                for(c2=0;c2<twiddled;c2++) {
+                    if (i[tx] == done_i[c2] &&
+                        j[tx] == done_j[c2]) {
+                        already_done = true;
+                    }
+                }
+
+                if(already_done) {
+                    v[c] = v[tx]; // just copy, the add has already been done.
+
+                }
+                else
+                {
+                    v[c] += v[tx];
+                    done_i[twiddled] = i[c];
+                    done_j[twiddled] = j[c];
+                    twiddled++;
+                    printf("transpose of (%d,%d)!\n", i[tx], j[tx]);
+                }
+
+            }
+
+
+        }
+
+    }
+    free(done_i);
+    free(done_j);
+    printf("twiddled = %d\n", twiddled);
 }
 
 
