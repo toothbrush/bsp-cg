@@ -1,5 +1,5 @@
 #define N 3
-#define EPS (10E-4)
+#define EPS (10E-8)
 #define K_MAX (100)
 
 #include "stdio.h"
@@ -11,7 +11,7 @@ void cg_test();
 
 int main(int argc, char** argv) {
 
-    printf("hi\n");
+    printf("Starting CG, sequential.\n");
 
     cg_test();
 
@@ -134,6 +134,7 @@ void cg_test() {
             copy(r,p);
         } else {
             beta = rho/rho_old;
+            printf("is there a precision problem here? beta = rho/rho_old => %lf = %lf/%lf\n", beta, rho, rho_old);
             scale(beta, p, p);
             add(r,p,p);
         }
