@@ -3,36 +3,34 @@ CFLAGS= -g -Wall
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
 # the objects required to build the final executable CG
-OBJS=bspedupack.o bspcg.o
-OBJS2=bspedupack.o cg_test.o
+OBJS=bspcg.o
 OBJS_SEQ=seq.o
-LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o libs/paullib.o
+OBJS_GEN=genmat.o libs/vecalloc-seq.o
+LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o libs/paullib.o libs/bspedupack.o
+BINS=cg genmat seq
 
-all: lib cg cg2 seq
+all: lib $(BINS)
 
 lib: force-look
 	cd libs; make all
 
-seq: $(OBJS_SEQ) lib
+seq: $(OBJS_SEQ) $(LIBOBJS)
 	gcc -o seq $(OBJS_SEQ) $(LIB_OBJS) -lm
 
-cg2: $(OBJS2) lib
-	$(CC) $(CFLAGS) -o cg2 $(OBJS2) $(LIBOBJS) $(LFLAGS)
+genmat: $(OBJS_GEN) $(LIBOBJS)
+	gcc -o genmat $(OBJS_GEN) $(LIB_OBJS) -lm
 
-cg: $(OBJS) lib
+cg: $(OBJS) $(LIBOBJS)
 	$(CC) $(CFLAGS) -o cg $(OBJS) $(LIBOBJS) $(LFLAGS)
 
-cg_test.o: cg_test.c
-	$(CC) $(CFLAGS) -c cg_test.c
+genmat.o: genmat.c genmat.h $(LIBOBJS)
+	gcc -c -o genmat.o genmat.c
 
 bspcg.o: bspcg.c
 	$(CC) $(CFLAGS) -c bspcg.c
 
-bspedupack.o: lib
-	$(CC) $(CFLAGS) -c libs/bspedupack.c
-
 clean:
-	rm -f *.o cg
+	rm -f *.o $(BINS)
 	cd libs; make clean
 
 force-look:

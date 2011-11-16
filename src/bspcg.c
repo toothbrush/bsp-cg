@@ -1,21 +1,18 @@
+// This file is for experimenting with. I don't want to further break the 
+// 'original'.
+
 #include <assert.h>
 #include <string.h>
 #include "libs/bspedupack.h"
 #include "libs/bspfuncs.h"
 #include "libs/vecio.h"
 #include "libs/paullib.h"
+#include "libs/debug.h"
 
-#define EPS (1.0E-12)
-#define KMAX (100)
+#define EPS (10E-4)
+#define KMAX (1000)
 
-// ---- BEGIN DEBUG OUTPUT ----
-#define STRINGIFY( in ) #in
-#define MACROTOSTRING( in ) STRINGIFY( in )
-//use the AT macro to insert the current file name and line
-#define AT __FILE__ ":" MACROTOSTRING(__LINE__)
-#define HERE_NOP( ... ) out( -1, AT, __VA_ARGS__ )
-#define HERE( ... )     out( s , AT, __VA_ARGS__ )
-// ---- END DEBUG OUTPUT ----
+#define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
 /*
  * This program takes as input:
@@ -41,6 +38,8 @@ void bspcg(){
         *srcprocv, *srcindv, *destprocu, *destindu;
     double *a, *v, *u, time0, time1, time2;
 
+    int counter0;
+
     bsp_begin(P);
 
     p= bsp_nprocs(); /* p=P */
@@ -63,6 +62,10 @@ void bspcg(){
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
     HERE("Loaded distribution vec u.\n");
 
+    HERE("Some values: %d,%d,%d,%d,%d\n", p,s,n,nu,nv);
+
+    assert(nu==nv); // right? we want the distribution to be equal?
+
     /*
     // this seems to work.
     // so is it true to say this program should work with all distributions?
@@ -79,12 +82,9 @@ void bspcg(){
     */
 
     if (s==0){
-        HERE("Sparse matrix-vector multiplication\n");
+        HERE("CG solver\n");
         HERE(" using %d processors\n",p);
     }
-
-    // postcondition:
-    // u s.t. Au = v
 
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
@@ -102,9 +102,7 @@ void bspcg(){
     //EXAMPLE of Av: result goes into u.
     //bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
     //           srcprocv,srcindv,destprocu,destindu);
-
     //
-    //EXAMPLE of Av: result goes into u.
     //bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
     //      destprocu,destindu,nv,nu,v,u);
     bsp_sync();
@@ -114,17 +112,27 @@ void bspcg(){
 
     k = 0; // iteration number
     double* r = vecallocd(nu);
+    zero(nu,r);
+    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
+               srcprocv,srcindv,destprocu,destindu);
+    // must we not initialise?
+    //
+    // mv(A,u,r);
+    // neg(r);
+    // add(v,r,r);
+    //
+    // => r = v-A.u     ; the residue
+    //
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+            destprocu,destindu, nv, nu, u, r);
+    negate(nv, r);
+    axpy(nv, 1.0, v, r, r);
 
-    for (i = 0 ; i < nv; i ++)
-        HERE("uindex[%d]=%d\n", i, uindex[i]);
+    DUMP(nv,r);
+    //for (i = 0 ; i < nv; i ++)
+    //    HERE("uindex[%d]=%d\n", i, uindex[i]);
 
-    bspmv_init(p,s,n, nrows, ncols, nu,nu, rowindex,colindex,uindex,vindex, //input
-           srcprocv, srcindv, destprocu, destindu ); // output
-    bsp_sync();
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nv,nv,u,r);
-    bsp_sync();
-    negate(nu,r);
-    addvec(nu,r,r,v);
+    printf("p %d, s %d, n %d, r %p\n", p,s,n,r);
     double rho = bspip(p,s,n,r,r);
     double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
@@ -132,44 +140,43 @@ void bspcg(){
 
     double *pvec = vecallocd(nu);
     double *pold = vecallocd(nu);
-    double *w = vecallocd(nu);
+    double *w    = vecallocd(nu);
 
-    bsp_sync();
-    while(sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v)) && k < KMAX) {
-        if(k == 0) {
-            copyvec(nu, pvec, r) ; // do p <- r;
+    while ( k < KMAX &&
+            sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v))) {
+        printf("sqrt(rho) = %lf\n", sqrt(rho));
+        if ( k == 0 ) {
+            copyvec(nv,r,pvec);
         } else {
             beta = rho/rho_old;
-            scalevec(n,beta,pold);
-            addvec(n,pvec, r, pold); //TODO hmmmmmm p modified! ???
+            axpy(nv,beta,pvec,r,     // beta*p + r
+                              pvec); // into p
         }
-        bsp_sync();
-        HERE("Iteration %d.\n", k);
+        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+              destprocu,destindu,nv,nu,pvec,w);
 
-        bspmv_init(p,s,n, nrows, ncols, nv,nu, rowindex,colindex,uindex,uindex, //input
-               srcprocv, srcindv, destprocu, destindu ); // output
-        HERE("GREAT\n");
-        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nv,nu,pvec,w);
-        HERE("GREAT2\n");
-        //CRAP:
-        //copyvec(nu, w,pvec);
-        bsp_sync();
         gamma = bspip(p,s,n,pvec,w);
-        bsp_sync();
-        alpha = rho / gamma;
-        copyvec(nu,pold, pvec);
-        scalevec(n,alpha,pvec);
-        scalevec(n,-alpha,w);
-        addvec(n,u, u, pvec);
-        addvec(n,r, r, w);
+
+        alpha = rho/gamma;
+
+        axpy(nv,alpha,pvec,u,   // alpha*p + u
+                           u);  // into u
+
+        axpy(nv,-alpha,w,r,
+                         r);
+
         rho_old = rho;
-        bsp_sync();
-        rho = bspip(p,s,n,r,r);
-        copyvec(nu, w,pvec);
+        rho     = bspip(p,s,n,r,r);
+
         k++;
+
+        HERE("iteration %d\n", k);
     }
 
     // end heavy lifting.
+
+    // postcondition:
+    // u s.t. Au = v
 
     bsp_sync();
     time2= bsp_time();
@@ -183,21 +190,16 @@ void bspcg(){
 
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        HERE("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
+        HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);
+    }
+    HERE("...which gives, filled in:\n");
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+          destprocu,destindu,nv,nu,u,w);
+    for(i=0; i<nu; i++){
+        iglob=uindex[i];
+        HERE("FINAL ANSWER *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
 
-    if (s==0) {
-        HERE("Checksumming to follow.\n");
-        HERE("A.u\t\tv (should be equal)\n");
-    }
-
-    bspmv_init(p,s,n, nrows, ncols, nv,nu, rowindex,colindex,vindex,uindex, //input
-               srcprocv, srcindv, destprocu, destindu ); // output
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,destprocu,destindu,nv,nu,u,w);
-    for(i=0; i<nu; i++) {
-        HERE("%lf\t\t%lf\n",w[i],v[i]);
-    }
-    bsp_sync();
 
     vecfreed(w);        vecfreed(pvec);
     vecfreed(r);        vecfreed(pold);
