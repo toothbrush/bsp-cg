@@ -145,7 +145,7 @@ int main (int argc, char** argv) {
 
     fprintf(stderr,"Left with %d nonzeroes\n", uniques);
 
-
+    // TODO: profit?
 
     free(xs);
     free(ys);
@@ -163,14 +163,25 @@ int main (int argc, char** argv) {
 void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
 {
 
+    // steps, probably:
+    // first sum all rows
+    // then find diagonals
+    // check each diagonal against the summed rows.
+
     int c,c2;
     for(c = 0; c< nz; c++)
     {
+        rowtotal[c]=0;
         for(c2 = 0; c2<nz; c2++)
         {
-        //rowtotal +=
+            rowtotal[c] += 0; // TODO
         }
     }
+
+    // find diagonals:
+
+
+    // foreach diag, check.
 
 
 }
