@@ -183,6 +183,14 @@ void outputMatrix(int nz, int*i, int*j, double*v) {
 
     }
 
+    // ...and now for the vector-to-be-solved-for:
+    printf("%%%%b vector double general array original\n");
+    //size line:
+    printf("%d\n", N);
+    for(c=0;c<N;c++) {
+        printf("%lf\n", ran());
+    }
+
 
 }
 
