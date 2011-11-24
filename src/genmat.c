@@ -14,12 +14,13 @@ int N;
 int main (int argc, char** argv) {
 
     double sparsity;
+    // aim for a nonzero density
     sparsity = 0.2; // nz = 20% of the size of the matrix
 
     N = 10; // size of matrix.
 
     double mu;
-    mu = 1.2; //scalar for making matrix diagonal-dominant
+    mu = 2.0; //scalar for making matrix diagonal-dominant
 
     int nz = sparsity*N*N;
     int* xs;
@@ -145,9 +146,12 @@ int main (int argc, char** argv) {
 
     checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
 
-    fprintf(stderr,"Left with %d nonzeroes\n", uniques);
+    fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", uniques, newsize/((double)N*N));
+    fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
     // TODO: profit?
+
+    outputMatrix(newsize, diag_i, diag_j, diag_val);
 
     free(xs);
     free(ys);
@@ -160,6 +164,26 @@ int main (int argc, char** argv) {
     free(diag_val);
 
     return 0;
+}
+
+void outputMatrix(int nz, int*i, int*j, double*v) {
+
+    // here we'll print the matrix.
+
+    //header:
+    printf("%%%%Extended-MatrixMarket matrix coordinate double general original\n");
+    //size line: m n nz
+    printf("%d %d %d\n", N, N, nz);
+
+    // next the value lines: i j v,
+    int c;
+    for(c=0;c<nz;c++) {
+
+        printf("%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
+
+    }
+
+
 }
 
 void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
