@@ -8,12 +8,13 @@
 
 typedef int bool;
 
+int N;
+
 int main (int argc, char** argv) {
 
     double sparsity;
     sparsity = 0.2; // nz = 20% of the size of the matrix
 
-    int N;
     N = 10; // size of matrix.
 
     double mu;
@@ -114,7 +115,7 @@ int main (int argc, char** argv) {
     for(v=0;v<uniques;v++)
         // to make diags stand out.
         if(fin_i[v]==fin_j[v])
-            fprintf(stderr,"after transpose A[%d][%d]=%lf //\n", fin_i[v],fin_j[v], fin_val[v]);
+            fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", fin_i[v],fin_j[v], fin_val[v]);
         else
             fprintf(stderr,"after transpose A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
 
@@ -163,26 +164,55 @@ int main (int argc, char** argv) {
 void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
 {
 
-    // steps, probably:
+    // steps:
     // first sum all rows
     // then find diagonals
     // check each diagonal against the summed rows.
 
     int c,c2;
+    double * rowtotal;
+    rowtotal = vecallocd(N);
+    double * diagonals;
+    diagonals = vecallocd(N);
+
+    for(c = 0; c< N; c++)
+    {
+        rowtotal[c] = 0;
+        diagonals[c] = 0;
+    }
+
     for(c = 0; c< nz; c++)
     {
-        rowtotal[c]=0;
-        for(c2 = 0; c2<nz; c2++)
-        {
-            rowtotal[c] += 0; // TODO
+        if(i[c] != j[c]) {
+            rowtotal[i[c]] += abs(v[c]);
         }
     }
 
     // find diagonals:
-
+    for(c = 0; c<nz; c++)
+    {
+        if(i[c] == j[c]){
+            diagonals[i[c]] = v[c];
+        }
+    }
 
     // foreach diag, check.
+    for(c=0; c<N; c++) {
 
+        if (abs(diagonals[c]) <= rowtotal[c]) {
+            fprintf(stderr, "PROBLEM: diagonal > rowtotal: \n"
+                            "    diagonals[%d] = %lf\n"
+                            "    rowtotal[%d]  = %lf\n",
+                            c, diagonals[c],
+                            c, rowtotal[c]
+                   );
+            fprintf(stderr, "increase mu?\n");
+        }
+
+    }
+
+    free(rowtotal);
+    free(diagonals);
 
 }
 
@@ -216,7 +246,7 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
 
                 v[c2] += mu;
                 if (v[c2] <= 0)
-                    fprintf(stderr, "WARNING: not all diagonals are >0!\n");
+                    fprintf(stderr, "ERROR: not all diagonals are >0!\n");
 
                 break;
 
@@ -255,7 +285,7 @@ void addTranspose(int* i, int* j, double* v, int nz) {
 
             if (i[tx] == j[c] &&
                 j[tx] == i[c] &&
-                c != tx // don't double everything!
+                c     != tx      // don't double everything!
                 ) {
 
                 already_done = false;
