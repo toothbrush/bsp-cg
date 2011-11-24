@@ -8,6 +8,7 @@ OBJS_SEQ=seq.o
 OBJS_GEN=genmat.o libs/vecalloc-seq.o
 LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o libs/paullib.o libs/bspedupack.o
 BINS=cg genmat seq
+MONDRI_DIR=$(HOME)/Mondriaan3.11/src
 
 all: lib $(BINS)
 
@@ -27,7 +28,7 @@ genmat.o: genmat.c genmat.h $(LIBOBJS)
 	gcc -c -o genmat.o genmat.c
 
 bspcg.o: bspcg.c
-	$(CC) $(CFLAGS) -c bspcg.c
+	$(CC) $(CFLAGS) -c bspcg.c -I$(MONDRI_DIR)/include
 
 clean:
 	rm -f *.o $(BINS)
