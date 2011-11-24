@@ -1,5 +1,6 @@
 #include "libs/vecalloc-seq.h"
 #include <stdio.h>
+#include <math.h>
 #include <time.h>
 #include "genmat.h"
 
@@ -18,7 +19,7 @@ int main (int argc, char** argv) {
     N = 10; // size of matrix.
 
     double mu;
-    mu = 2.0; //factor for making matrix diagonal-dominant
+    mu = 1.2; //scalar for making matrix diagonal-dominant
 
     int nz = sparsity*N*N;
     int* xs;
@@ -184,7 +185,7 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
     for(c = 0; c< nz; c++)
     {
         if(i[c] != j[c]) {
-            rowtotal[i[c]] += abs(v[c]);
+            rowtotal[i[c]] += fabs(v[c]);
         }
     }
 
@@ -199,11 +200,11 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
     // foreach diag, check.
     for(c=0; c<N; c++) {
 
-        if (abs(diagonals[c]) <= rowtotal[c]) {
-            fprintf(stderr, "PROBLEM: diagonal > rowtotal: \n"
+        if ( !(fabs(diagonals[c]) > rowtotal[c]) ) {
+            fprintf(stderr, "PROBLEM: diagonal > rowtotal doesn't hold: \n"
                             "    diagonals[%d] = %lf\n"
                             "    rowtotal[%d]  = %lf\n",
-                            c, diagonals[c],
+                            c, fabs(diagonals[c]),
                             c, rowtotal[c]
                    );
             fprintf(stderr, "increase mu?\n");
