@@ -193,7 +193,7 @@ void bspcg(){
         iglob=uindex[i];
         HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);
     }
-    HERE("...which gives, filled in:\n");
+    HERE("...which gives, filled in (should equal v):\n");
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
           destprocu,destindu,nv,nu,u,w);
     for(i=0; i<nu; i++){
