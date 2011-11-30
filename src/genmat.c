@@ -13,6 +13,10 @@ int N;
 
 int main (int argc, char** argv) {
 
+    enum outputformat out;
+
+    out = EMM;
+
     double sparsity;
     // aim for a nonzero density
     sparsity = 0.2; // nz = 20% of the size of the matrix
@@ -151,7 +155,11 @@ int main (int argc, char** argv) {
 
     // TODO: profit?
 
-    outputMatrix(newsize, diag_i, diag_j, diag_val);
+    if(out == SIMPLE) {
+        outputSimpleMatrix(newsize, diag_i, diag_j, diag_val);
+    } else if (out == EMM) {
+        outputMatrix(newsize, diag_i, diag_j, diag_val);
+    }
 
     free(xs);
     free(ys);
@@ -166,9 +174,29 @@ int main (int argc, char** argv) {
     return 0;
 }
 
+void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
+
+    // here we'll print the matrix in simple format, for one proc.
+
+    // no header.
+    //size line: m n nz
+    printf("%d %d %d %d\n", N, N, nz, 1); // one processor, i.e. not distributed
+    // begin and end bounds of proc 1 are 0 and nz
+    printf("0\n%d\n", nz);
+
+    // next the value lines: i j value:
+    int c;
+    for(c=0;c<nz;c++) {
+
+        printf("%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
+
+    }
+
+
+}
 void outputMatrix(int nz, int*i, int*j, double*v) {
 
-    // here we'll print the matrix.
+    // here we'll print the matrix in EMM format.
 
     //header:
     printf("%%%%Extended-MatrixMarket matrix coordinate double general original\n");
