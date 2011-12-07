@@ -125,8 +125,13 @@ void bspcg(){
     //
     // => r = v-A.u     ; the residue
     //
+
+    // for a test: see if A.u gives something sensible.
+
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
             destprocu,destindu, nv, nu, u, r);
+    HERE("Dumping A.u = \n");
+    DUMP(nu,r);
     negate(nv, r);
     axpy(nv, 1.0, v, r, r);
 
@@ -161,7 +166,7 @@ void bspcg(){
 
         alpha = rho/gamma;
 
-        axpy(nv,alpha,pvec,u,   // alpha*p + u
+        axpy(nu,alpha,pvec,u,   // alpha*p + u
                            u);  // into u
 
         axpy(nv,-alpha,w,r,
@@ -172,6 +177,7 @@ void bspcg(){
 
         k++;
 
+        HERE("rho = %lf\n", rho);
         HERE("iteration %d\n", k);
     }
 
