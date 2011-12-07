@@ -29,11 +29,17 @@ void copyvec(int n, double* src,
 
 }
 
+void one (int nv, double * a)
+{
+    int i;
+    for (i = 0; i < nv; i++)
+        a[i] = 1.0;
+}
 void zero (int nv, double * a)
 {
     int i;
     for (i = 0; i < nv; i++)
-        a[i] = 0;
+        a[i] = 0.0;
 }
 
 void axpy (int nv, double a, double* x, double* y,double* result) {

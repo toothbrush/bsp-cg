@@ -171,12 +171,15 @@ void bspcg(){
 
         axpy(nv,-alpha,w,r,
                          r);
+        HERE("dumping R\n");
+        DUMP(nv,r);
 
         rho_old = rho;
         rho     = bspip(p,s,n,r,r);
 
         k++;
 
+        HERE("rho_old = %lf\n", rho_old);
         HERE("rho = %lf\n", rho);
         HERE("iteration %d\n", k);
     }
