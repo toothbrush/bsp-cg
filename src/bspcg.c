@@ -8,7 +8,7 @@
 #include "libs/vecio.h"
 #include "libs/paullib.h"
 #include "libs/debug.h"
-#include <Mondriaan.h>
+// #include <Mondriaan.h>
 
 #define EPS (10E-5)
 #define KMAX (100)
@@ -62,6 +62,7 @@ void bspcg(){
     HERE("Loaded distribution vec v.\n");
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
     HERE("Loaded distribution vec u.\n");
+    DUMP(nu,u);
 
     HERE("Some values: %d,%d,%d,%d,%d\n", p,s,n,nu,nv);
 
@@ -113,7 +114,7 @@ void bspcg(){
 
     k = 0; // iteration number
     double* r = vecallocd(nu);
-    zero(nu,r);
+    /*zero(nu,r);*/
     bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
                srcprocv,srcindv,destprocu,destindu);
     // must we not initialise?
