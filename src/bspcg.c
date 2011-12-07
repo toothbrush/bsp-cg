@@ -10,8 +10,8 @@
 #include "libs/debug.h"
 #include <Mondriaan.h>
 
-#define EPS (10E-8)
-#define KMAX (1000)
+#define EPS (10E-5)
+#define KMAX (100)
 
 #define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
@@ -134,8 +134,8 @@ void bspcg(){
     //    HERE("uindex[%d]=%d\n", i, uindex[i]);
 
     printf("p %d, s %d, n %d, r %p\n", p,s,n,r);
-    double rho = bspip(p,s,n,r,r);
-    double alpha,gamma,rho_old,beta;
+    long double rho = bspip(p,s,n,r,r);
+    long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
     bsp_sync();
 

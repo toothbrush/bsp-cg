@@ -15,13 +15,13 @@ int main (int argc, char** argv) {
 
     enum outputformat out;
 
-    out = EMM;
+    out = SIMPLE;
 
     double sparsity;
     // aim for a nonzero density
-    sparsity = 0.2; // nz = 20% of the size of the matrix
+    sparsity = 0.01; // nz = 20% of the size of the matrix
 
-    N = 10; // size of matrix.
+    N = 100; // size of matrix.
 
     double mu;
     mu = 2.0; //scalar for making matrix diagonal-dominant
@@ -192,6 +192,17 @@ void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
 
     }
 
+    fprintf(stderr, "======= vector v follows ======\n");
+
+
+    // N vector entries, one proc.
+    printf("%d %d\n", N, 1);
+    for(c=0;c<N;c++) {
+        // each line is
+        //   coordinate processor value
+        printf("%d %d %lf\n", c+1, 1, ran());
+    }
+
 
 }
 void outputMatrix(int nz, int*i, int*j, double*v) {
@@ -268,6 +279,7 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
                             c, rowtotal[c]
                    );
             fprintf(stderr, "increase mu?\n");
+            exit(5);
         }
 
     }
