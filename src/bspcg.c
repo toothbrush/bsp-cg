@@ -1,6 +1,3 @@
-// This file is for experimenting with. I don't want to further break the 
-// 'original'.
-
 #include <assert.h>
 #include <string.h>
 #include "libs/bspedupack.h"
@@ -37,7 +34,7 @@ void bspcg(){
     int s, p, n, nz, i, iglob, nrows, ncols, nv, nu,
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
         *srcprocv, *srcindv, *destprocu, *destindu;
-    double *a, *v, *u, time0, time1, time2;
+    double *a, *v, *u, *r, time0, time1, time2;
 
     int counter0;
 
@@ -51,6 +48,9 @@ void bspcg(){
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
     HERE("Done reading matrix file.\n");
+    // TODO: dump matrix A?
+    HERE("First 5 values of a\n");
+    DUMP(5,a);
 
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
@@ -59,9 +59,10 @@ void bspcg(){
 
     /* Read vector distributions */
     bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
-    HERE("Loaded distribution vec v.\n");
+    HERE("Loaded distribution vec v. Dumping v =\n");
+    DUMP(nv,v);
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
-    HERE("Loaded distribution vec u.\n");
+    HERE("Loaded distribution vec u. Dumping u =\n");
     DUMP(nu,u);
 
     HERE("Some values: %d,%d,%d,%d,%d\n", p,s,n,nu,nv);
@@ -113,8 +114,10 @@ void bspcg(){
     int k;
 
     k = 0; // iteration number
-    double* r = vecallocd(nu);
-    /*zero(nu,r);*/
+    r = vecallocd(nu);
+    zero(nu,r);
+    HERE("r. should be zero.\n");
+    DUMP(nu,r);
     bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
                srcprocv,srcindv,destprocu,destindu);
     // must we not initialise?
@@ -130,11 +133,13 @@ void bspcg(){
 
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
             destprocu,destindu, nv, nu, u, r);
-    HERE("Dumping A.u = \n");
+    HERE("Dumping A.u =\n");
+    // TODO huh??? 0?
     DUMP(nu,r);
     negate(nv, r);
     axpy(nv, 1.0, v, r, r);
 
+    HERE("Dumping v - A.u =\n");
     DUMP(nv,r);
     //for (i = 0 ; i < nv; i ++)
     //    HERE("uindex[%d]=%d\n", i, uindex[i]);
