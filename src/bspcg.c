@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <unistd.h>
 #include <assert.h>
 #include <string.h>
 #include "libs/bspedupack.h"
@@ -44,7 +46,9 @@ void bspcg(){
     s= bsp_pid();
 
     HERE("Start of BSP section.\n");
-    HERE("My working dir: PWD=%s\n", get_current_dir_name());
+    char my_cwd[1024];
+    getcwd(my_cwd, 1024);
+    HERE("My working dir: PWD=%s\n", my_cwd);
 
     if(!file_exists(matrixfile)) {
 	HERE("Matrix file doesn't exist. (%s)\n", matrixfile);
