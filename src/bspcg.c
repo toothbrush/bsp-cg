@@ -8,7 +8,7 @@
 // #include <Mondriaan.h>
 
 #define EPS (10E-5)
-#define KMAX (100)
+#define KMAX (10)
 
 #define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
@@ -44,7 +44,20 @@ void bspcg(){
     s= bsp_pid();
 
     HERE("Start of BSP section.\n");
+    HERE("My working dir: PWD=%s\n", get_current_dir_name());
 
+    if(!file_exists(matrixfile)) {
+	HERE("Matrix file doesn't exist. (%s)\n", matrixfile);
+	bsp_abort(0);
+	}
+    if(!file_exists(vfilename)) {
+	HERE("V-distrib file doesn't exist. (%s)\n", vfilename);
+	bsp_abort(0);
+	}
+    if(!file_exists(ufilename)) {
+	HERE("U-distrib file doesn't exist. (%s)\n", ufilename);
+	bsp_abort(0);
+	}
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
     HERE("Done reading matrix file.\n");
