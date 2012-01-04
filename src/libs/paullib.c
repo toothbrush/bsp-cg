@@ -7,12 +7,14 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include "paullib.h"
 
 bool file_exists(const char * filename)
 {
-    if (FILE * file = fopen(filename, "r"))
+    FILE *file;
+    if((file = fopen(filename, "r")))
     {
         fclose(file);
         return true;
