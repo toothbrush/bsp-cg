@@ -8,6 +8,17 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include "paullib.h"
+
+bool file_exists(const char * filename)
+{
+    if (FILE * file = fopen(filename, "r"))
+    {
+        fclose(file);
+        return true;
+    }
+    return false;
+}
 
 void negate(int n, double* v)
 {

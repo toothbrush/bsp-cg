@@ -1,3 +1,6 @@
+#include "paulbool.h"
+
+bool file_exists(const char * filename);
 void out(int proc, char*at, const char *fmt, ...);
 void negate(int n, double* v);
 void copyvec(int n, double* dest, double* src);

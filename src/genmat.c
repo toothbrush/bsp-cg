@@ -3,11 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include "genmat.h"
-
-#define true 1
-#define false 0
-
-typedef int bool;
+#include "libs/paulbool.h"
 
 int N;
 
