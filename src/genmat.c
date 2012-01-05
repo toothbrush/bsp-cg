@@ -122,7 +122,7 @@ int main (int argc, char** argv) {
 
     }
 
-    // things must be symmetric, but they aren't FIXME
+    /*
     addTranspose(fin_i, fin_j, fin_val, uniques);
 
 
@@ -132,6 +132,8 @@ int main (int argc, char** argv) {
             fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", fin_i[v],fin_j[v], fin_val[v]);
         else
             fprintf(stderr,"after transpose A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
+
+     */
 
     int diagonals_present = countDiags(fin_i, fin_j, uniques);
     fprintf(stderr, "found %d diagonal(s), still need %d more.\n", diagonals_present, (N-diagonals_present));
@@ -156,12 +158,13 @@ int main (int argc, char** argv) {
     for(v=0;v<newsize;v++)
         fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
 
+    // things must be symmetric, but they aren't FIXME
+    // ... here's a good place to do the transposing thing.
+
     checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
 
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", uniques, newsize/((double)N*N));
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
-
-    // TODO: profit?
 
     if(out == SIMPLE) {
         outputSimpleMatrix(newsize, diag_i, diag_j, diag_val);
@@ -182,6 +185,176 @@ int main (int argc, char** argv) {
     free(diag_val);
 
     return 0;
+}
+
+void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
+{
+
+    // steps:
+    // first sum all rows
+    // then find diagonals
+    // check each diagonal against the summed rows.
+
+    int c,c2;
+    double * rowtotal;
+    rowtotal = vecallocd(N);
+    double * diagonals;
+    diagonals = vecallocd(N);
+
+    for(c = 0; c< N; c++)
+    {
+        rowtotal[c] = 0;
+        diagonals[c] = 0;
+    }
+
+    for(c = 0; c< nz; c++)
+    {
+        if(i[c] != j[c]) {
+            rowtotal[i[c]] += fabs(v[c]);
+        }
+    }
+
+    // find diagonals:
+    for(c = 0; c<nz; c++)
+    {
+        if(i[c] == j[c]){
+            diagonals[i[c]] = v[c];
+        }
+    }
+
+    // foreach diag, check.
+    for(c=0; c<N; c++) {
+
+        if ( !(fabs(diagonals[c]) > rowtotal[c]) ) {
+            fprintf(stderr, "PROBLEM: diagonal > rowtotal doesn't hold: \n"
+                            "    diagonals[%d] = %lf\n"
+                            "    rowtotal[%d]  = %lf\n",
+                            c, fabs(diagonals[c]),
+                            c, rowtotal[c]
+                   );
+            fprintf(stderr, "increase mu? sometimes just running again is enough.\n");
+            exit(5);
+        }
+
+    }
+
+    free(rowtotal);
+    free(diagonals);
+
+}
+
+int countDiags(int* i, int* j, int nz) {
+    int diags=0;
+    int c;
+    for (c=0; c<nz; c++) {
+        if(i[c]==j[c])
+            diags++;
+    }
+
+    return diags;
+}
+
+void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present, int diags_needed) {
+
+    int c,c2;
+    int pos = nz; // where to start appending.
+
+    bool found;
+    // for each diagonal element, check if it exists, if not, append.
+    for(c=1;c<=diags_needed;c++)
+    {
+        found = false;
+        for(c2=0;c2<nz;c2++) {
+            if(i[c2] == j[c2] && // is a diagonal
+               j[c2] == c-1)     // is the diag we are looking for.
+            {
+                found = true;
+                fprintf(stderr, "found a diag.\n");
+
+                v[c2] += mu;
+                if (v[c2] <= 0)
+                    fprintf(stderr, "ERROR: not all diagonals are >0!\n");
+
+                break;
+
+            }
+        }
+        if (!found) {
+            // append
+            fprintf(stderr, "not found, appending!\n");
+            i[pos] = c-1;
+            j[pos] = c-1;
+            v[pos] = mu;
+            pos++;
+        }
+    }
+
+}
+
+// FIXME: this is still dodgy:
+void addTranspose(int* i, int* j, double* v, int nz) {
+
+
+    int c,c2;
+    int tx;
+
+    // we have to cache already-added (i,j)'s
+
+    int twiddled=0;
+    int* done_i;
+    int* done_j;
+    done_i = vecalloci(nz);
+    done_j = vecalloci(nz);
+
+    bool already_done;
+    for(c=0; c<nz; c++) {
+        // find transpose, if it exists, add it to current.
+
+        for(tx=0; tx<nz; tx++) {
+
+            if (i[tx] == j[c] &&
+                j[tx] == i[c] &&
+                c     != tx      // don't double everything!
+                ) {
+
+                already_done = false;
+                for(c2=0; c2<twiddled; c2++) {
+                    if (i[tx] == done_i[c2] &&
+                        j[tx] == done_j[c2]) {
+                        already_done = true;
+                        break;
+                    }
+                }
+
+                if(already_done) {
+                    v[c] = v[tx]; // just copy, the add has already been done.
+
+                }
+                else
+                {
+                    v[c] += v[tx];
+                    done_i[twiddled] = i[c];
+                    done_j[twiddled] = j[c];
+                    twiddled++;
+                    fprintf(stderr,"transpose of (%d,%d)!\n", i[tx], j[tx]);
+                }
+
+            }
+
+
+        }
+
+    }
+    free(done_i);
+    free(done_j);
+    fprintf(stderr,"twiddled = %d\n", twiddled);
+}
+
+
+double ran() {
+
+    return ((double)rand()/(double)RAND_MAX);
+
 }
 
 void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
@@ -282,170 +455,3 @@ void outputMatrix(int nz, int*i, int*j, double*v) {
 
 }
 
-void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
-{
-
-    // steps:
-    // first sum all rows
-    // then find diagonals
-    // check each diagonal against the summed rows.
-
-    int c,c2;
-    double * rowtotal;
-    rowtotal = vecallocd(N);
-    double * diagonals;
-    diagonals = vecallocd(N);
-
-    for(c = 0; c< N; c++)
-    {
-        rowtotal[c] = 0;
-        diagonals[c] = 0;
-    }
-
-    for(c = 0; c< nz; c++)
-    {
-        if(i[c] != j[c]) {
-            rowtotal[i[c]] += fabs(v[c]);
-        }
-    }
-
-    // find diagonals:
-    for(c = 0; c<nz; c++)
-    {
-        if(i[c] == j[c]){
-            diagonals[i[c]] = v[c];
-        }
-    }
-
-    // foreach diag, check.
-    for(c=0; c<N; c++) {
-
-        if ( !(fabs(diagonals[c]) > rowtotal[c]) ) {
-            fprintf(stderr, "PROBLEM: diagonal > rowtotal doesn't hold: \n"
-                            "    diagonals[%d] = %lf\n"
-                            "    rowtotal[%d]  = %lf\n",
-                            c, fabs(diagonals[c]),
-                            c, rowtotal[c]
-                   );
-            fprintf(stderr, "increase mu?\n");
-            exit(5);
-        }
-
-    }
-
-    free(rowtotal);
-    free(diagonals);
-
-}
-
-int countDiags(int* i, int* j, int nz) {
-    int diags=0;
-    int c;
-    for (c=0; c<nz; c++) {
-        if(i[c]==j[c])
-            diags++;
-    }
-
-    return diags;
-}
-
-void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present, int diags_needed) {
-
-    int c,c2;
-    int pos = nz; // where to start appending.
-
-    bool found;
-    // for each diagonal element, check if it exists, if not, append.
-    for(c=1;c<=diags_needed;c++)
-    {
-        found = false;
-        for(c2=0;c2<nz;c2++) {
-            if(i[c2] == j[c2] && // is a diagonal
-               j[c2] == c-1)     // is the diag we are looking for.
-            {
-                found = true;
-                fprintf(stderr, "found a diag.\n");
-
-                v[c2] += mu;
-                if (v[c2] <= 0)
-                    fprintf(stderr, "ERROR: not all diagonals are >0!\n");
-
-                break;
-
-            }
-        }
-        if (!found) {
-            // append
-            fprintf(stderr, "not found, appending!\n");
-            i[pos] = c-1;
-            j[pos] = c-1;
-            v[pos] = mu;
-            pos++;
-        }
-    }
-
-}
-void addTranspose(int* i, int* j, double* v, int nz) {
-
-
-    int c,c2;
-    int tx;
-
-    // we have to cache already-added (i,j)'s
-
-    int twiddled=0;
-    int* done_i;
-    int* done_j;
-    done_i = vecalloci(nz);
-    done_j = vecalloci(nz);
-
-    bool already_done;
-    for(c=0; c<nz; c++) {
-        // find transpose, if it exists, add it to current.
-
-        for(tx=0; tx<nz; tx++) {
-
-            if (i[tx] == j[c] &&
-                j[tx] == i[c] &&
-                c     != tx      // don't double everything!
-                ) {
-
-                already_done = false;
-                for(c2=0;c2<twiddled;c2++) {
-                    if (i[tx] == done_i[c2] &&
-                        j[tx] == done_j[c2]) {
-                        already_done = true;
-                        break;
-                    }
-                }
-
-                if(already_done) {
-                    v[c] = v[tx]; // just copy, the add has already been done.
-
-                }
-                else
-                {
-                    v[c] += v[tx];
-                    done_i[twiddled] = i[c];
-                    done_j[twiddled] = j[c];
-                    twiddled++;
-                    fprintf(stderr,"transpose of (%d,%d)!\n", i[tx], j[tx]);
-                }
-
-            }
-
-
-        }
-
-    }
-    free(done_i);
-    free(done_j);
-    fprintf(stderr,"twiddled = %d\n", twiddled);
-}
-
-
-double ran() {
-
-    return ((double)rand()/(double)RAND_MAX);
-
-}
