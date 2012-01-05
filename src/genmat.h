@@ -4,12 +4,14 @@ void   addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_prese
 void   addTranspose(int* i, int* j, double* v, int nz);
 double ran();
 void   outputMatrix(int nz, int*i, int*j, double*v);
+void   outputMathematicaMatrix(int nz, int*i, int*j, double*v);
 void   outputSimpleMatrix(int nz, int*i, int*j, double*v);
 
 
 enum outputformat {
     EMM,
-    SIMPLE
+    SIMPLE,
+    MATHEMATICA
 };
 
 

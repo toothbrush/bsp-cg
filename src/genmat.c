@@ -11,13 +11,22 @@ int main (int argc, char** argv) {
 
     enum outputformat out;
 
-    out = SIMPLE;
+    out = MATHEMATICA;
 
     double sparsity;
     // aim for a nonzero density
-    sparsity = 0.01; // nz = 20% of the size of the matrix
+    sparsity = 0.02; // nz = sparsity*100% of the size of the matrix
 
-    N = 100; // size of matrix.
+    // read the size of the matrix from command line
+    if (argc < 2) {
+        printf("Usage: %s N\n", argv[0]);
+        exit(-1);
+    }
+
+    if(sscanf(argv[1], "%d", &N) != 1) {
+        printf("couldn't read command-line argument for N. must be an integer.\n");
+        exit(-2);
+    }
 
     double mu;
     mu = 2.0; //scalar for making matrix diagonal-dominant
@@ -29,6 +38,8 @@ int main (int argc, char** argv) {
 
     fprintf(stderr,"Generating matrix. N=%d, density=%lf, target nz=%d\n",
             N, sparsity, nz);
+
+    //TODO: use random() from stdlib!!!
     srand((unsigned)time(NULL));
 
 
@@ -111,6 +122,7 @@ int main (int argc, char** argv) {
 
     }
 
+    // things must be symmetric, but they aren't FIXME
     addTranspose(fin_i, fin_j, fin_val, uniques);
 
 
@@ -155,6 +167,8 @@ int main (int argc, char** argv) {
         outputSimpleMatrix(newsize, diag_i, diag_j, diag_val);
     } else if (out == EMM) {
         outputMatrix(newsize, diag_i, diag_j, diag_val);
+    } else if (out == MATHEMATICA) {
+        outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val);
     }
 
     free(xs);
@@ -170,6 +184,44 @@ int main (int argc, char** argv) {
     return 0;
 }
 
+void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
+
+    // here we'll print the matrix in Mathematica format
+
+    // Mathematica "header"
+
+    printf("somemat = SparseArray[ { \n");
+    // the value lines: i j value:
+    int c;
+    for(c=0;c<nz-1;c++) {
+
+        printf("{%d, %d} -> %lf,\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
+
+    }
+    printf("{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mondriaan expects 1-based coordinates.
+
+    printf("} ] ;\n");
+    printf("somemat // MatrixForm\n");
+
+    printf("\n\n\n");
+
+    fprintf(stderr, "======= vector v follows ======\n");
+
+
+    printf("vec = {\n");
+    // N vector entries, one proc.
+    for(c=0;c<N-1;c++) {
+        // each line is a value, in order of the vector indices.
+        //printf("%d %d %lf\n", c+1, 1, ran());
+        printf("%lf,\n", ran());
+    }
+    // last line without comma.
+    printf("%lf\n};\nvec // MatrixForm\n", ran());
+
+    // and finally, for the paranoid:
+    printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
+
+}
 void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
 
     // here we'll print the matrix in simple format, for one proc.
