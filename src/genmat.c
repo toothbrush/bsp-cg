@@ -220,6 +220,7 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
 
     // and finally, for the paranoid:
     printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
+    printf("correctAnswer = LinearSolve[somemat,vec]\n");
 
 }
 void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
