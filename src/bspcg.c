@@ -35,7 +35,7 @@ void bspcg(){
 
     int s, p, n, nz, i, iglob, nrows, ncols, nv, nu,
         *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
-        *srcprocv, *srcindv, *destprocu, *destindu;
+        *srcprocu, *srcindu, *destprocv, *destindv;
     double *a, *v, *u, *r, time0, time1, time2;
 
     int counter0;
@@ -77,7 +77,11 @@ void bspcg(){
     /* Read vector distributions */
     bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
     HERE("Loaded distribution vec v. Dumping v =\n");
-    DUMP(nv,v);
+    for(i=0; i<nv; i++){
+        iglob= vindex[i];
+        printf("vector component %d of v=%lf\n", iglob, v[i]);
+    }
+
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
     HERE("Loaded distribution vec u. Dumping u =\n");
     DUMP(nu,u);
@@ -112,11 +116,12 @@ void bspcg(){
     bsp_sync();
     time0= bsp_time();
 
+    assert(ncols==nrows);
     // alloc metadata arrays
-    srcprocv  = vecalloci(ncols);
-    srcindv   = vecalloci(ncols);
-    destprocu = vecalloci(nrows);
-    destindu  = vecalloci(nrows);
+    srcprocu  = vecalloci(ncols);
+    srcindu   = vecalloci(ncols);
+    destprocv = vecalloci(nrows);
+    destindv  = vecalloci(nrows);
 
     // do the heavy lifting.
     //EXAMPLE of Av: result goes into u.
@@ -135,8 +140,8 @@ void bspcg(){
     zero(nu,r);
     HERE("r. should be zero.\n");
     DUMP(nu,r);
-    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
-               srcprocv,srcindv,destprocu,destindu);
+    bspmv_init(p,s,n,nrows,ncols,nu,nv,rowindex,colindex,uindex,vindex,
+               srcprocu,srcindu,destprocv,destindv);
     // must we not initialise?
     //
     // mv(A,u,r);
@@ -148,8 +153,8 @@ void bspcg(){
 
     // for a test: see if A.u gives something sensible.
 
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
-            destprocu,destindu, nv, nu, u, r);
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
+            destprocv,destindv, nu, nv, u, r);
     HERE("Dumping A.u =\n");
     // TODO huh??? 0?
     DUMP(nu,r);
@@ -181,8 +186,8 @@ void bspcg(){
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
         }
-        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
-              destprocu,destindu,nv,nu,pvec,w);
+        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
+              destprocv,destindv,nu,nv,pvec,w);
 
         gamma = bspip(p,s,n,pvec,w);
 
@@ -226,8 +231,8 @@ void bspcg(){
         HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);
     }
     HERE("...which gives, filled in (should equal v):\n");
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
-          destprocu,destindu,nv,nu,u,w);
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
+          destprocv,destindv,nu,nv,u,w);
     for(i=0; i<nu; i++){
         iglob=uindex[i];
         HERE("FINAL ANSWER *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
@@ -237,8 +242,8 @@ void bspcg(){
     vecfreed(w);        vecfreed(pvec);
     vecfreed(r);        vecfreed(pold);
 
-    vecfreei(destindu); vecfreei(destprocu);
-    vecfreei(srcindv);  vecfreei(srcprocv);
+    vecfreei(destindv); vecfreei(destprocv);
+    vecfreei(srcindu);  vecfreei(srcprocu);
     vecfreed(u);        vecfreed(v);
     vecfreei(uindex);   vecfreei(vindex);
     vecfreei(rowindex); vecfreei(colindex);
