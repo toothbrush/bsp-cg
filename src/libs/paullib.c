@@ -98,7 +98,11 @@ void out(int proc, char*at, const char *fmt, ...)
     if(proc == -1) {
         sprintf(extended_fmt, "%s (P.) -- \t%s", at, fmt);
     } else {
+#ifdef __GNUC__
         sprintf(extended_fmt, "\e[0;%dm%s (P%d) -- \t%s\e[0m", 31+proc, at, proc, fmt);
+#else
+        sprintf(extended_fmt, "%s (P%d) -- \t%s", at, proc, fmt);
+#endif
     }
 
 #ifdef DEBUG
