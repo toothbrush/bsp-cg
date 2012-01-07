@@ -139,8 +139,6 @@ void bspcg(){
     k = 0; // iteration number
     r = vecallocd(nu);
     zero(nu,r);
-    HERE("r. should be zero.\n");
-    DUMP(nu,r);
     bspmv_init(p,s,n,nrows,ncols,nu,nv,rowindex,colindex,uindex,vindex,
                srcprocu,srcindu,destprocv,destindv);
     // must we not initialise?
@@ -162,11 +160,6 @@ void bspcg(){
     negate(nv, r);
     axpy(nv, 1.0, v, r, r);
 
-    HERE("Dumping v - A.u =\n");
-    DUMP(nv,r);
-    //for (i = 0 ; i < nv; i ++)
-    //    HERE("uindex[%d]=%d\n", i, uindex[i]);
-
     printf("p %d, s %d, n %d, r %p\n", p,s,n,r);
     long double rho = bspip(p,s,n,r,r);
     long double alpha,gamma,rho_old,beta;
@@ -179,14 +172,13 @@ void bspcg(){
 
     while ( k < KMAX &&
             rho > EPS * EPS * bspip(p,s,n,v,v)) {
-        printf("sqrt(rho) = %lf\n", sqrt(rho));
+        HERE("sqrt(rho) = %lf\n", sqrt(rho));
         if ( k == 0 ) {
             copyvec(nv,r,pvec);
         } else {
             beta = rho/rho_old;
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
-	HERE("beta = %lf\n",beta);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
               destprocv,destindv,nu,nv,pvec,w);
@@ -200,16 +192,12 @@ void bspcg(){
 
         axpy(nv,-alpha,w,r,
                          r);
-        HERE("dumping R\n");
-        DUMP(nv,r);
 
         rho_old = rho;
         rho     = bspip(p,s,n,r,r);
 
         k++;
 
-        HERE("rho_old = %lf\n", rho_old);
-        HERE("rho = %lf\n", rho);
         HERE("iteration %d\n", k);
     }
 

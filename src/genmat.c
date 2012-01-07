@@ -20,7 +20,7 @@ int main (int argc, char** argv) {
 
     // read the size of the matrix from command line
     if (argc < 2) {
-        printf("Usage: %s N\n", argv[0]);
+        printf("Usage: %s N [mu]\n", argv[0]);
         exit(-1);
     }
 
@@ -28,17 +28,23 @@ int main (int argc, char** argv) {
         printf("couldn't read command-line argument for N. must be an integer.\n");
         exit(-2);
     }
-
     double mu;
     mu = 2.5; //scalar for making matrix diagonal-dominant
+
+    if(argc > 2 && sscanf(argv[2], "%lf", &mu) != 1) {
+        exit(-2);
+    }
+
+
 
     int nz = sparsity*N*N;
     int* xs;
     int* ys;
     double* vals;
 
-    fprintf(stderr,"Generating matrix. N=%d, density=%lf, target nz=%d\n",
+    fprintf(stderr,"Generating matrix. N=%d, density=%lf, target nz=%d, ",
             N, sparsity, nz);
+    fprintf(stderr, "mu = %lf\n", mu);
 
     // seed the random generator.
     srandom((unsigned)time(NULL));
