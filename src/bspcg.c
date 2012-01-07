@@ -78,15 +78,14 @@ void bspcg(){
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
-    HERE("Loaded distribution vec u.\n");
 
-    HERE("Some values: %d,%d,%d,%d,%d\n", p,s,n,nu,nv);
+    printf("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
 
     assert(nu==nv); // we want the distribution to be equal
 
     if (s==0){
-        HERE("CG solver\n");
-        HERE(" using %d processors\n",p);
+        printf("CG solver\n");
+        printf("   using %d processors\n",p);
     }
 
     if (s==0){
@@ -113,15 +112,6 @@ void bspcg(){
     zero(nu,r);
     bspmv_init(p,s,n,nrows,ncols,nu,nv,rowindex,colindex,uindex,vindex,
                srcprocu,srcindu,destprocv,destindv);
-    //
-    // mv(A,u,r);
-    // neg(r);
-    // add(v,r,r);
-    //
-    // => r = v-A.u     ; the residue
-    //
-
-    // for a test: see if A.u gives something sensible:
 
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
             destprocv,destindv, nu, nv, u, r);
@@ -145,7 +135,8 @@ void bspcg(){
             beta = rho/rho_old;
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
-            HERE("[Iteration %02d] rho  = %lle\n", k, rho);
+            if(s==0)
+                printf("[Iteration %02d] rho  = %Le\n", k, rho);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
               destprocv,destindv,nu,nv,pvec,w);
@@ -177,9 +168,9 @@ void bspcg(){
 
     if (s==0){
         HERE("End of matrix-vector multiplications.\n");
-        HERE("Initialization took only %.6lf seconds.\n",time1-time0);
-        HERE("%d CG iterations took only %.6lf seconds.\n", k,        (time2-time1));
-        HERE("The computed solution is:\n");
+        HERE("Initialization took only %.6lf seconds.\n", time1-time0);
+        printf("%d CG iterations took only %.6lf seconds.\n", k-1, (time2-time1));
+        printf("The computed solution is:\n");
     }
 
     for(i=0; i<nu; i++){
@@ -194,8 +185,47 @@ void bspcg(){
         HERE("CHECKSUM     *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
 
-    HERE("Final error = %lle\n", rho_old);
+    bsp_push_reg(u,nu*SZDBL);
 
+    bsp_sync();
+
+    if(s==0) {
+        /*
+        for(i=0;i<n;i++)
+            printf("srcindu[%d]=%d\n", i, srcindu[i]);
+        for(i=0;i<n;i++)
+            printf("destindv[%d]=%d\n", i, destindv[i]);
+        for(i=0;i<n;i++)
+            printf("destprocv[%d]=%d\n", i, destprocv[i]);
+        for(i=0;i<n;i++)
+            printf("srcprocu[%d]=%d\n", i, srcprocu[i]);
+            */
+
+
+        printf("Final error = %Le\n", rho_old);
+        printf("========= Solution =========\n");
+
+        double* answer = vecallocd(n);
+
+        for(i=0; i<n; i++) {
+
+            // get value from the right proc
+
+            // TODO: get final answer to proc 0
+            // TODO2: try bsp_put()
+            bsp_get(srcprocu[i], u, srcindu[i]*SZDBL,&answer[uindex[i]],SZDBL);
+            HERE("doing: bsp_get(%d, u, %d*SZDBL,&answer[%d],SZDBL);\n",srcprocu[i], destindv[i],uindex[i]);
+            HERE("vindex[%d]=%d\n", i, vindex[i]);
+            HERE("destindv[%d]=%d\n", i, destindv[i]);
+            printf("got item %d = %lf\n", i, answer[i]);
+
+
+        }
+
+        vecfreed(answer);
+    }
+
+    bsp_pop_reg(u);
 
     vecfreed(w);        vecfreed(pvec);
     vecfreed(r);        vecfreed(pold);
