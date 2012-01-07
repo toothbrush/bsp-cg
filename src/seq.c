@@ -1,4 +1,3 @@
-#define N 3
 #define EPS (10E-8)
 #define K_MAX (100)
 
@@ -8,6 +7,7 @@
 
 #define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) printf("dump array[%d]=%lf\n",counter0, a[counter0])
 void cg_test();
+int N;
 
 int main(int argc, char** argv) {
 
@@ -70,43 +70,84 @@ void mv(double** A, double *u, double*res) {
     }
 }
 
+void find_N() {
+
+    // temporary
+
+    N = 10;
+}
+
+void read_A(double** A) {
+
+    char* filename = "examples/10x10.mtx";
+    int nz;
+
+    FILE* fp = fopen(filename, "r");
+
+    fscanf(fp, "%d %*d %d %*d", &N, &nz);
+
+    printf("N = %d, nz = %d\n", N, nz);
+    fscanf(fp, "%*d"); // ignore starting proc index
+    fscanf(fp, "%*d"); // ignore ending   proc index
+
+    int i, j; double val;
+    int c;
+    for(c=0;c<nz; c++) {
+        fscanf(fp, "%d %d %lf", &i,&j,&val);
+        A[i-1][j-1] = val;
+    }
+
+    fclose(fp);
+
+}
+
+void read_v(double* v) {
+
+    char* filename = "examples/10x10.v";
+
+    FILE* fp = fopen(filename, "r");
+
+    fscanf(fp, "%*d %*d");
+
+    int i; double val;
+    int c;
+    for(c=0;c<N; c++) {
+        fscanf(fp, "%d %*d %lf", &i,&val);
+        v[i-1] = val;
+    }
+
+    fclose(fp);
+
+
+}
 
 void cg_test() {
 
-    int i, counter0;
+    int i,j, counter0;
     double **A;
     double *u;
     double *v;
 
-    A = malloc(N * sizeof(double));
+    find_N();
 
-    u = malloc(N * sizeof(double));
-    v = malloc(N * sizeof(double));
-
+    A = malloc(sizeof(double*)*N);
     for(i=0;i<N;i++)
-    {
-        A[i] = malloc(N * sizeof(double));
-    }
+        A[i] = malloc(sizeof(double)*N);
 
-    // fill A and v with values:
+    // initialise A to all zeroes. (sparse)
+    for(i = 0; i<N; i++)
+        for(j = 0; j<N; j++)
+            A[i][j] = 0.0;
 
-    A[0][0] = 1.0;
-    A[0][1] = 2.0;
-    A[0][2] = 3.0;
-    A[1][0] = 4.0;
-    A[1][1] = 5.0;
-    A[1][2] = 6.0;
-    A[2][0] = 7.0;
-    A[2][1] = 8.0;
-    A[2][2] = 9.0;
+    read_A(A);
 
-    v[0] = 11.0;
-    v[1] = 12.0;
-    v[2] = 13.0;
+    v = malloc(sizeof(double)*N);
+    read_v(v);
 
+    u = malloc(sizeof(double)*N);
     //initialise guess of u:
     for(i=0;i<N;i++)
-        u[i] = 0;
+        u[i] = 0.0;
 
     // start 'heavy lifting'
 
@@ -125,16 +166,13 @@ void cg_test() {
     double *p; p = malloc(N*sizeof(double));
     double *w; w = malloc(N*sizeof(double));
 
-    DUMP(N, r);
     while(sqrt(rho) > EPS * sqrt(ip(v,v)) &&
             k < K_MAX)
     {
-        printf("sqrt(rho) = %lf\n", sqrt(rho));
         if(k==0) {
             copy(r,p);
         } else {
             beta = rho/rho_old;
-            printf("is there a precision problem here? beta = rho/rho_old => %lf = %lf/%lf\n", beta, rho, rho_old);
             scale(beta, p, p);
             add(r,p,p);
         }
@@ -152,18 +190,16 @@ void cg_test() {
         rho = ip(r,r);
         k++;
 
-        printf("iteration %d\n", k);
-
     }
 
-    printf("my answer is:\n");
+    printf("after %d iterations, my answer is:\n", k);
     for(i=0;i<N;i++)
         printf("u[%d] = %lf\n", i, u[i]);
 
     printf("Filling in gives:\n");
     mv(A,u,p);
     for(i=0;i<N;i++)
-        printf("A.u[%d] = %lf\n", i, p[i]);
+        printf("A.u[%d] = %lf \t orig_v[%d]=%lf\n", i, p[i], i, v[i]);
 
     free(p);
     free(w);
