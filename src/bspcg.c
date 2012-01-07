@@ -50,18 +50,21 @@ void bspcg(){
     getcwd(my_cwd, 1024);
     HERE("My working dir: PWD=%s\n", my_cwd);
 
-    if(!file_exists(matrixfile)) {
-	HERE("Matrix file doesn't exist. (%s)\n", matrixfile);
-	bsp_abort(0);
-	}
-    if(!file_exists(vfilename)) {
-	HERE("V-distrib file doesn't exist. (%s)\n", vfilename);
-	bsp_abort(0);
-	}
-    if(!file_exists(ufilename)) {
-	HERE("U-distrib file doesn't exist. (%s)\n", ufilename);
-	bsp_abort(0);
-	}
+    // only proc 0 reads the files.
+    if(s==0) {
+        if(!file_exists(matrixfile)) {
+            HERE("Matrix file doesn't exist. (%s)\n", matrixfile);
+            bsp_abort(0);
+        }
+        if(!file_exists(vfilename)) {
+            HERE("V-distrib file doesn't exist. (%s)\n", vfilename);
+            bsp_abort(0);
+        }
+        if(!file_exists(ufilename)) {
+            HERE("U-distrib file doesn't exist. (%s)\n", ufilename);
+            bsp_abort(0);
+        }
+    }
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
     HERE("Done reading matrix file.\n");
