@@ -123,7 +123,9 @@ void read_v(double* v) {
 
 void cg_test() {
 
-    int i,j, counter0;
+    int i,j, counter0=0;
+    // remove warning:
+    counter0=counter0;
     double **A;
     double *u;
     double *v;
@@ -196,11 +198,12 @@ void cg_test() {
     for(i=0;i<N;i++)
         printf("u[%d] = %lf\n", i, u[i]);
 
-    printf("Filling in gives:\n");
+    printf("-> Filling in gives:\n");
     mv(A,u,p);
     for(i=0;i<N;i++)
         printf("A.u[%d] = %lf \t orig_v[%d]=%lf\n", i, p[i], i, v[i]);
 
+    printf("\nFinal error=%lf\n", rho);
     free(p);
     free(w);
     free(r);
@@ -210,6 +213,4 @@ void cg_test() {
         free(A[i]);
     free(A);
 
-
 }
-
