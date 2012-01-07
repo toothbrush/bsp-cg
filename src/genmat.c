@@ -14,7 +14,16 @@ int main (int argc, char** argv) {
     // aim for a nonzero density given by sparsity:
     sparsity = 0.2; // nz = sparsity*100% of the size of the matrix
 
-    // read the size of the matrix from command line
+    /*
+     * we say 'aim' here, since of course initially exactly
+     *    nz = sparsity * N^2
+     * nonzeroes will be generated at random spots, but because
+     * the matrix must be symmetric and diagonally positive, the
+     * actual number of nonzeroes will probably not be exactly
+     * the projected number.
+     */
+
+    // read the desired size of the matrix from command line
     if (argc < 2) {
         printf("Usage: %s N [mu]\n", argv[0]);
         exit(-1);
@@ -25,13 +34,12 @@ int main (int argc, char** argv) {
         exit(-2);
     }
     double mu;
-    mu = 2.5; //scalar for making matrix diagonal-dominant
+    mu = 2.5; //default scalar for making matrix diagonal-dominant
 
+    // maybe the user supplied a different mu
     if(argc > 2 && sscanf(argv[2], "%lf", &mu) != 1) {
         exit(-2);
     }
-
-
 
     int nz = sparsity*N*N;
     int* xs;
@@ -156,7 +164,7 @@ int main (int argc, char** argv) {
     fprintf(stderr, "Going to make symmetric now...\n");
 #endif
 
-    // things must be symmetric, but they aren't FIXME
+    // things must be symmetric, but they aren't, yet
     // ... here's a good place to do the transposing thing.
 
     free(fin_i);
@@ -387,8 +395,10 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
 #endif
 
                 v[c2] += mu;
-                if (v[c2] <= 0)
+                if (v[c2] <= 0){
                     fprintf(stderr, "ERROR: not all diagonals are >0!\n");
+                    exit(22);
+                }
 
                 break;
 
@@ -408,6 +418,9 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
 
 }
 
+/*
+ * return a random double in the interval [0,1]
+ */
 double ran() {
 
     return ((double)random()/(double)RAND_MAX);
