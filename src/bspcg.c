@@ -76,15 +76,13 @@ void bspcg(){
 
     /* Read vector distributions */
     bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
-    HERE("Loaded distribution vec v. Dumping v =\n");
+    HERE("Loaded distribution vec v.\n");
     for(i=0; i<nv; i++){
         iglob= vindex[i];
-        HERE("v[%d]=%lf\n", iglob, v[i]);
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
-    HERE("Loaded distribution vec u. Dumping u =\n");
-    DUMP(nu,u);
+    HERE("Loaded distribution vec u.\n");
 
     HERE("Some values: %d,%d,%d,%d,%d\n", p,s,n,nu,nv);
 
@@ -171,7 +169,6 @@ void bspcg(){
 
     while ( k < KMAX &&
             rho > EPS * EPS * bspip(p,s,n,v,v)) {
-        HERE("sqrt(rho) = %lf\n", sqrt(rho));
         if ( k == 0 ) {
             copyvec(nv,r,pvec);
         } else {
@@ -197,7 +194,6 @@ void bspcg(){
 
         k++;
 
-        HERE("iteration %d\n", k);
     }
 
     // end heavy lifting.
@@ -211,7 +207,7 @@ void bspcg(){
     if (s==0){
         HERE("End of matrix-vector multiplications.\n");
         HERE("Initialization took only %.6lf seconds.\n",time1-time0);
-        HERE("CG took only %.6lf seconds.\n",           (time2-time1));
+        HERE("%d CG iterations took only %.6lf seconds.\n", k,        (time2-time1));
         HERE("The computed solution is:\n");
     }
 
@@ -224,8 +220,10 @@ void bspcg(){
           destprocv,destindv,nu,nv,u,w);
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        HERE("FINAL ANSWER *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
+        HERE("CHECKSUM     *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
+
+    HERE("Final error = %lf\n", rho);
 
 
     vecfreed(w);        vecfreed(pvec);
