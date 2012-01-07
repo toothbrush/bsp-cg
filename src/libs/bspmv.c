@@ -1,6 +1,8 @@
 #include "bspfuncs.h"
 #include "bspedupack.h"
 
+// This is from BSPedupack
+
 void bspmv(int p, int s, int n, int nz, int nrows, int ncols,
            double *a, int *inc,
            int *srcprocv, int *srcindv, int *destprocu, int *destindu,

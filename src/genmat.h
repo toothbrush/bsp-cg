@@ -4,16 +4,7 @@ void   addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_prese
 int    addTranspose(int nz, int* i, int* j, double* v, int maxsize, int* out_i, int* out_j, double* out_v);
 double ran();
 
-
+// output functions
 void   outputMatrix(int nz, int*i, int*j, double*v, double*vec);
 void   outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec);
 void   outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec);
-
-
-enum outputformat {
-    EMM,
-    SIMPLE,
-    MATHEMATICA
-};
-
-

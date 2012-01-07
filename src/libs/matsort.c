@@ -2,6 +2,8 @@
 #include "vecio.h"
 #include "bspedupack.h"
 
+// This is from BSPedupack
+
 int key(int i, int radix, int keytype){
    /* This function computes the key of an index i
       according to the keytype */

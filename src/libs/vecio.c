@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <limits.h>
 #include "bspedupack.h"
-#include "paullib.h"
 #include "bspfuncs.h"
 #include "matsort.h"
-#include "debug.h"
+
+// This is from BSPedupack
 
 void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz, 
                      int **pia, int **pja, double **pa){

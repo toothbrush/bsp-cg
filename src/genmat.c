@@ -10,12 +10,8 @@ int N;
 
 int main (int argc, char** argv) {
 
-    enum outputformat out;
-
-    out = MATHEMATICA;
-
     double sparsity;
-    // aim for a nonzero density
+    // aim for a nonzero density given by sparsity:
     sparsity = 0.2; // nz = sparsity*100% of the size of the matrix
 
     // read the size of the matrix from command line
