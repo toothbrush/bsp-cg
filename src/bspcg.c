@@ -86,23 +86,7 @@ void bspcg(){
 
     HERE("Some values: %d,%d,%d,%d,%d\n", p,s,n,nu,nv);
 
-    assert(nu==nv); // right? we want the distribution to be equal?
-
-    /*
-    // this seems to work.
-    // so is it true to say this program should work with all distributions?
-	// YUP
-    // i.e. r,p, etc should copy u/v's distr?
-    for(i=0; i<nu; i++){
-        iglob=uindex[i];
-        HERE("proc=%d i=%d, u=%lf \n",s,iglob,u[i]);
-    }
-    for(i=0; i<nv; i++){
-        iglob=vindex[i];
-        HERE("proc=%d i=%d, v=%lf \n",s,iglob,v[i]);
-    }
-    bsp_abort(0);
-    */
+    assert(nu==nv); // we want the distribution to be equal
 
     if (s==0){
         HERE("CG solver\n");
@@ -123,12 +107,6 @@ void bspcg(){
     destindv  = vecalloci(nrows);
 
     // do the heavy lifting.
-    //EXAMPLE of Av: result goes into u.
-    //bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
-    //           srcprocv,srcindv,destprocu,destindu);
-    //
-    //bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
-    //      destprocu,destindu,nv,nu,v,u);
     bsp_sync();
     time1= bsp_time();
 
@@ -139,7 +117,6 @@ void bspcg(){
     zero(nu,r);
     bspmv_init(p,s,n,nrows,ncols,nu,nv,rowindex,colindex,uindex,vindex,
                srcprocu,srcindu,destprocv,destindv);
-    // must we not initialise?
     //
     // mv(A,u,r);
     // neg(r);
@@ -148,7 +125,7 @@ void bspcg(){
     // => r = v-A.u     ; the residue
     //
 
-    // for a test: see if A.u gives something sensible.
+    // for a test: see if A.u gives something sensible:
 
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
             destprocv,destindv, nu, nv, u, r);
@@ -199,7 +176,7 @@ void bspcg(){
     // end heavy lifting.
 
     // postcondition:
-    // u s.t. Au = v
+    // u s.t. A.u = v
 
     bsp_sync();
     time2= bsp_time();
