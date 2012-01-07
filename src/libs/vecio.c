@@ -44,7 +44,8 @@ void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz,
        ja[k] is the global column index.
     */
 
-    int pA, mA, nA, nzA, nz, q, nzq, k, tagsz, status, *Pstart, *ia, *ja;
+    int pA, mA, nA, nzA, nz, q, nzq, k, status, *Pstart, *ia, *ja;
+    size_t tagsz;
     double value, *a;
     indexpair t;
     FILE *fp;
