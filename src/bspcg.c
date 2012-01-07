@@ -36,8 +36,6 @@ void bspcg(){
         *srcprocu, *srcindu, *destprocv, *destindv;
     double *a, *v, *u, *r, time0, time1, time2;
 
-    int counter0;
-
     bsp_begin(P);
 
     p= bsp_nprocs(); /* p=P */
@@ -147,7 +145,7 @@ void bspcg(){
             beta = rho/rho_old;
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
-            HERE("[Iteration %02d] rho  = %lle\n", k, rho_old);
+            HERE("[Iteration %02d] rho  = %lle\n", k, rho);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
               destprocv,destindv,nu,nv,pvec,w);
@@ -196,7 +194,7 @@ void bspcg(){
         HERE("CHECKSUM     *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
 
-    HERE("Final error = %lle\n", rho);
+    HERE("Final error = %lle\n", rho_old);
 
 
     vecfreed(w);        vecfreed(pvec);
@@ -217,15 +215,15 @@ int main(int argc, char **argv){
     bsp_init(bspcg, argc, argv);
     P = bsp_nprocs();
 
-    if(argc != 4){
+    if(argc != 3){
         HERE_NOP("Usage:\n");
-        HERE_NOP("\t%s [mtx-dist] [v-dist] [u-dist]\n\n", argv[0]);
+        HERE_NOP("\t%s [mtx-dist] [v-vec]\n\n", argv[0]);
         exit(1);
     }
 
     strcpy(matrixfile, argv[1]);
     strcpy(vfilename, argv[2]);
-    strcpy(ufilename, argv[3]);
+    strcpy(ufilename, argv[2]);
 
     bspcg();
     exit(0);
