@@ -9,8 +9,8 @@
 #include "libs/debug.h"
 // #include <Mondriaan.h>
 
-#define EPS (10E-5)
-#define KMAX (10)
+#define EPS (10E-10)
+#define KMAX (100)
 
 #define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
 
@@ -93,6 +93,7 @@ void bspcg(){
     /*
     // this seems to work.
     // so is it true to say this program should work with all distributions?
+	// YUP
     // i.e. r,p, etc should copy u/v's distr?
     for(i=0; i<nu; i++){
         iglob=uindex[i];
@@ -177,7 +178,7 @@ void bspcg(){
     double *w    = vecallocd(nu);
 
     while ( k < KMAX &&
-            sqrt(rho) > EPS * sqrt(bspip(p,s,n,v,v))) {
+            rho > EPS * EPS * bspip(p,s,n,v,v)) {
         printf("sqrt(rho) = %lf\n", sqrt(rho));
         if ( k == 0 ) {
             copyvec(nv,r,pvec);
@@ -185,6 +186,7 @@ void bspcg(){
             beta = rho/rho_old;
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
+	HERE("beta = %lf\n",beta);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
               destprocv,destindv,nu,nv,pvec,w);
