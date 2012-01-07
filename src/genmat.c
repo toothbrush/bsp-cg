@@ -1,5 +1,6 @@
 #include "libs/vecalloc-seq.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include "genmat.h"
@@ -29,7 +30,7 @@ int main (int argc, char** argv) {
     }
 
     double mu;
-    mu = 2.0; //scalar for making matrix diagonal-dominant
+    mu = 2.5; //scalar for making matrix diagonal-dominant
 
     int nz = sparsity*N*N;
     int* xs;
@@ -40,7 +41,7 @@ int main (int argc, char** argv) {
             N, sparsity, nz);
 
     //TODO: use random() from stdlib!!!
-    srand((unsigned)time(NULL));
+    srandom((unsigned)time(NULL));
 
 
     xs = vecalloci(nz);
@@ -56,7 +57,9 @@ int main (int argc, char** argv) {
         ys[v]= (double)N * ran();
         vals[v]= ran()*2-1; // [-1,1]
 
+#ifdef DEBUG
         fprintf(stderr,"generated A[%d][%d]=%lf\n", xs[v],ys[v], vals[v]);
+#endif
 
     }
 
@@ -123,7 +126,9 @@ int main (int argc, char** argv) {
     }
 
     int diagonals_present = countDiags(fin_i, fin_j, uniques);
+#ifdef DEBUG
     fprintf(stderr, "found %d diagonal(s), still need %d more.\n", diagonals_present, (N-diagonals_present));
+#endif
 
     int newsize = uniques + (N - diagonals_present);
     int* diag_i;
@@ -142,10 +147,12 @@ int main (int argc, char** argv) {
     }
 
     addDiagonal(mu, diag_i, diag_j, diag_val, uniques, diagonals_present, N);
+#ifdef DEBUG
     for(v=0;v<newsize;v++)
         fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
 
     fprintf(stderr, "Going to make symmetric now...\n");
+#endif
 
     // things must be symmetric, but they aren't FIXME
     // ... here's a good place to do the transposing thing.
@@ -162,12 +169,15 @@ int main (int argc, char** argv) {
 
     actual_symmetric_size = addTranspose(newsize,diag_i,diag_j,diag_val,
                               max_symmetric_size,fin_i, fin_j, fin_val);
+
+#ifdef DEBUG
     for(v=0;v<actual_symmetric_size;v++)
         // to make diags stand out.
         if(fin_i[v]==fin_j[v])
             fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", fin_i[v],fin_j[v], fin_val[v]);
         else
             fprintf(stderr,"after transpose A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
+#endif
 
     // swap stuff around here:
     free(diag_i); free(diag_j); free(diag_val);
@@ -180,13 +190,10 @@ int main (int argc, char** argv) {
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", newsize, newsize/((double)N*N));
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    if(out == SIMPLE) {
-        outputSimpleMatrix(newsize, diag_i, diag_j, diag_val);
-    } else if (out == EMM) {
-        outputMatrix(newsize, diag_i, diag_j, diag_val);
-    } else if (out == MATHEMATICA) {
-        outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val);
-    }
+    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val);
+    fprintf(stderr,"========== THIS IS A DIVIDER ========== \n");
+    //outputMatrix(newsize, diag_i, diag_j, diag_val);
+    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val);
 
     free(xs);
     free(ys);
@@ -199,6 +206,9 @@ int main (int argc, char** argv) {
 }
 
 /**
+ * This function takes some matrix A and produces (almost) A' = A + A^T, which is
+ * a symmetric matrix. Note that the diagonals are not added.
+ *
  * @return number of nonzeros after transpose has been done.
  */
 int addTranspose(int nz, int* i, int* j, double* v,
@@ -363,7 +373,9 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
                j[c2] == c-1)     // is the diag we are looking for.
             {
                 found = true;
+#ifdef DEBUG
                 fprintf(stderr, "found a diag.\n");
+#endif
 
                 v[c2] += mu;
                 if (v[c2] <= 0)
@@ -375,7 +387,9 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
         }
         if (!found) {
             // append
+#ifdef DEBUG
             fprintf(stderr, "not found, appending!\n");
+#endif
             i[pos] = c-1;
             j[pos] = c-1;
             v[pos] = mu;
@@ -387,7 +401,7 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
 
 double ran() {
 
-    return ((double)rand()/(double)RAND_MAX);
+    return ((double)random()/(double)RAND_MAX);
 
 }
 
@@ -402,24 +416,23 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
     int c;
     for(c=0;c<nz-1;c++) {
 
-        printf("{%d, %d} -> %lf,\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
+        printf("{%d, %d} -> %lf,\n", i[c]+1, j[c]+1, v[c]); // Mathematica expects 1-based coordinates.
 
     }
-    printf("{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mondriaan expects 1-based coordinates.
+    printf("{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mathematica expects 1-based coordinates.
 
     printf("} ] ;\n");
     printf("somemat // MatrixForm\n");
 
     printf("\n\n\n");
 
-    fprintf(stderr, "======= vector v follows ======\n");
+    fprintf(stderr, "(* ======= vector v follows ====== *)\n");
 
 
     printf("vec = {\n");
     // N vector entries, one proc.
     for(c=0;c<N-1;c++) {
         // each line is a value, in order of the vector indices.
-        //printf("%d %d %lf\n", c+1, 1, ran());
         printf("%lf,\n", ran());
     }
     // last line without comma.
@@ -427,12 +440,14 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
 
     // and finally, for the paranoid:
     printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
-    printf("correctAnswer = LinearSolve[somemat,vec]\n");
+    printf("correctAnswer = LinearSolve[somemat,vec];\n");
+    printf("correctAnswer // MatrixForm\n");
 
 }
 void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
 
     // here we'll print the matrix in simple format, for one proc.
+    // this is nice for testing CG without going through Mondriaan first.
 
     // no header.
     //size line: m n nz
@@ -444,7 +459,7 @@ void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
     int c;
     for(c=0;c<nz;c++) {
 
-        printf("%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
+        printf("%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // bsp-cg expects 1-based coordinates.
 
     }
 
@@ -455,7 +470,7 @@ void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
     printf("%d %d\n", N, 1);
     for(c=0;c<N;c++) {
         // each line is
-        //   coordinate processor value
+        //   coordinate,processor,value
         printf("%d %d %lf\n", c+1, 1, ran());
     }
 
