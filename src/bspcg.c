@@ -45,13 +45,13 @@ void bspcg(){
     p= bsp_nprocs(); /* p=P */
     s= bsp_pid();
 
-    HERE("Start of BSP section.\n");
-    char my_cwd[1024];
-    getcwd(my_cwd, 1024);
-    HERE("My working dir: PWD=%s\n", my_cwd);
-
     // only proc 0 reads the files.
     if(s==0) {
+        HERE("Start of BSP section.\n");
+        char my_cwd[1024];
+        getcwd(my_cwd, 1024);
+        HERE("My working dir: PWD=%s\n", my_cwd);
+
         if(!file_exists(matrixfile)) {
             HERE("Matrix file doesn't exist. (%s)\n", matrixfile);
             bsp_abort(0);
@@ -68,9 +68,6 @@ void bspcg(){
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
     HERE("Done reading matrix file.\n");
-    // TODO: dump matrix A?
-    HERE("First 5 values of a\n");
-    DUMP(5,a);
 
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
@@ -82,7 +79,7 @@ void bspcg(){
     HERE("Loaded distribution vec v. Dumping v =\n");
     for(i=0; i<nv; i++){
         iglob= vindex[i];
-        printf("vector component %d of v=%lf\n", iglob, v[i]);
+        HERE("v[%d]=%lf\n", iglob, v[i]);
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
@@ -158,12 +155,11 @@ void bspcg(){
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
             destprocv,destindv, nu, nv, u, r);
     HERE("Dumping A.u =\n");
-    // TODO huh??? 0?
+    // TODO huh??? 0 on calvert?
     DUMP(nu,r);
     negate(nv, r);
     axpy(nv, 1.0, v, r, r);
 
-    printf("p %d, s %d, n %d, r %p\n", p,s,n,r);
     long double rho = bspip(p,s,n,r,r);
     long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
