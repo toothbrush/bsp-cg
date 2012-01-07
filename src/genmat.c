@@ -15,7 +15,7 @@ int main (int argc, char** argv) {
 
     double sparsity;
     // aim for a nonzero density
-    sparsity = 0.02; // nz = sparsity*100% of the size of the matrix
+    sparsity = 0.2; // nz = sparsity*100% of the size of the matrix
 
     // read the size of the matrix from command line
     if (argc < 2) {
@@ -145,7 +145,7 @@ int main (int argc, char** argv) {
     for(v=0;v<newsize;v++)
         fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
 
-    fprintf(stderr, "Going to make diagonal now...\n");
+    fprintf(stderr, "Going to make symmetric now...\n");
 
     // things must be symmetric, but they aren't FIXME
     // ... here's a good place to do the transposing thing.
@@ -161,7 +161,7 @@ int main (int argc, char** argv) {
     fin_val = vecallocd(max_symmetric_size);
 
     actual_symmetric_size = addTranspose(newsize,diag_i,diag_j,diag_val,
-                                         fin_i, fin_j, fin_val);
+                              max_symmetric_size,fin_i, fin_j, fin_val);
     for(v=0;v<actual_symmetric_size;v++)
         // to make diags stand out.
         if(fin_i[v]==fin_j[v])
@@ -170,10 +170,10 @@ int main (int argc, char** argv) {
             fprintf(stderr,"after transpose A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
 
     // swap stuff around here:
+    free(diag_i); free(diag_j); free(diag_val);
+
     diag_i = fin_i; diag_j = fin_j; diag_val = fin_val;
     newsize = actual_symmetric_size;
-
-    free(diag_i); free(diag_j); free(diag_val);
 
     checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
 
@@ -191,9 +191,6 @@ int main (int argc, char** argv) {
     free(xs);
     free(ys);
     free(vals);
-    free(fin_i);
-    free(fin_j);
-    free(fin_val);
     free(diag_i);
     free(diag_j);
     free(diag_val);
@@ -204,68 +201,87 @@ int main (int argc, char** argv) {
 /**
  * @return number of nonzeros after transpose has been done.
  */
-// FIXME original version, to be reconsidered.
 int addTranspose(int nz, int* i, int* j, double* v,
-                         int* out_i, int* out_j, double* out_v) {
-
+                 int max,int* out_i, int* out_j, double* out_v) {
 
     int c,c2;
-    int tx;
+    int actual_nonzeroes=0;
 
-    // we have to cache already-added (i,j)'s
-
-    int twiddled=0;
-    int* done_i;
-    int* done_j;
+    int *done_i, *done_j;
     done_i = vecalloci(nz);
     done_j = vecalloci(nz);
+    int done_n = 0;
 
-    bool already_done;
+    bool done;
+
     for(c=0; c<nz; c++) {
-        // find transpose, if it exists, add it to current.
+        // for each original entry
 
-        for(tx=0; tx<nz; tx++) {
+        if(i[c] == j[c]) {
+            // original diagonal
 
-            if (i[tx] == j[c] &&
-                j[tx] == i[c] &&
-                c     != tx      // don't double everything!
-                ) {
+            out_i[actual_nonzeroes] = i[c];
+            out_j[actual_nonzeroes] = j[c];
+            out_v[actual_nonzeroes] = v[c];
+            actual_nonzeroes++;
 
-                already_done = false;
-                for(c2=0; c2<twiddled; c2++) {
-                    if (i[tx] == done_i[c2] &&
-                        j[tx] == done_j[c2]) {
-                        already_done = true;
-                        break;
-                    }
+        } else {
+            // original non-diagonal
+
+            // check if it has been done.
+            done = false;
+            for(c2=0; c2 < done_n; c2++) {
+                if((done_i[c2] == i[c] && done_j[c2] == j[c]) ||
+                   (done_j[c2] == i[c] && done_i[c2] == j[c])  ) {
+                    done = true;
                 }
-
-                if(already_done) {
-                    v[c] = v[tx]; // just copy, the add has already been done.
-
-                }
-                else
-                {
-                    v[c] += v[tx];
-                    done_i[twiddled] = i[c];
-                    done_j[twiddled] = j[c];
-                    twiddled++;
-                    fprintf(stderr,"transpose of (%d,%d)!\n", i[tx], j[tx]);
-                }
-
             }
 
+            // if not yet done,
+            if(! done) {
 
+                //add v[c] into out_*
+                out_i[actual_nonzeroes] = i[c];
+                out_j[actual_nonzeroes] = j[c];
+                out_v[actual_nonzeroes] = 0;
+
+                out_v[actual_nonzeroes] += v[c];
+                for(c2=0; c2 < nz; c2++) {
+                    // add all transpose-components
+
+                    if(i[c2] == j[c] &&
+                       j[c2] == i[c]) {
+                        out_v[actual_nonzeroes] += v[c2];
+                    }
+
+                }
+                actual_nonzeroes++;
+
+                // and place it in the transposed position.
+
+                out_i[actual_nonzeroes] = j[c];
+                out_j[actual_nonzeroes] = i[c];
+                out_v[actual_nonzeroes] = out_v[actual_nonzeroes -1];
+                actual_nonzeroes++;
+
+                done_i[done_n] = i[c];
+                done_j[done_n] = j[c];
+                done_n ++;
+
+            }
         }
 
     }
+
     free(done_i);
     free(done_j);
-    fprintf(stderr,"twiddled = %d\n", twiddled);
+
+    return actual_nonzeroes;
+
 }
 
 
-void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz) 
+void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
 {
 
     // steps:
