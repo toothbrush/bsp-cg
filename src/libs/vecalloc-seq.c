@@ -1,7 +1,11 @@
 #include "vecalloc-seq.h"
 
 /* These functions can be used to allocate and deallocate vectors and matrices.
-   If not enough memory available, one processor halts them all.
+   If not enough memory available, stop the program.
+
+   This is a copy of the vecalloc?? functions from bspedupack.c,
+   with the difference that bsp_abort isn't used here. Pity about the
+   duplication, but oh well.
 */
 
 double *vecallocd(int n){

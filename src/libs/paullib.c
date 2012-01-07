@@ -11,6 +11,9 @@
 #include <stdarg.h>
 #include "paullib.h"
 
+/*
+ * useful function to stat a file
+ */
 bool file_exists(const char * filename)
 {
     FILE *file;
@@ -22,32 +25,33 @@ bool file_exists(const char * filename)
     return false;
 }
 
+/*
+ * negate all of a vector's components
+ */
 void negate(int n, double* v)
 {
     int i;
     for(i = 0; i<n; i++)
-        v[i] *= -1;
+        v[i] *= -1.0;
 
 }
 
+/*
+ * copy vec src into dest
+ */
 void copyvec(int n, double* src,
                     double* dest)
 {
     int i;
     for(i = 0; i<n; i++) {
         dest[i] = src[i];
-      //  Vindex[i] = vindex[i];
-      //  Nv = nv; N = n;
     }
 
 }
 
-void one (int nv, double * a)
-{
-    int i;
-    for (i = 0; i < nv; i++)
-        a[i] = 1.0;
-}
+/*
+ * make all vector components 0
+ */
 void zero (int nv, double * a)
 {
     int i;
@@ -55,6 +59,9 @@ void zero (int nv, double * a)
         a[i] = 0.0;
 }
 
+/*
+ * Calculate ax+y.
+ */
 void axpy (int nv, double a, double* x, double* y,double* result) {
 
     int i;
@@ -64,12 +71,20 @@ void axpy (int nv, double a, double* x, double* y,double* result) {
 
 }
 
+/*
+ * Scale a vector vec by a factor.
+ */
 void scalevec(int n, double factor, double*vec)
 {
     int i;
     for(i = 0; i<n; i++)
         vec[i] *= factor;
 }
+
+/*
+ * Add a and b and place result in dest. Assumes dest
+ * is malloc'd already.
+ */
 void addvec(int n, double* dest, double* a, double*b)
 {
     int i;
@@ -98,6 +113,8 @@ void out(int proc, char*at, const char *fmt, ...)
     if(proc == -1) {
         sprintf(extended_fmt, "%s (P.) -- \t%s", at, fmt);
     } else {
+        // on Huygens, using mpcc, we can't use colours, so skip them if we're
+        // not using GCC.
 #ifdef __GNUC__
         sprintf(extended_fmt, "\e[0;%dm%s (P%d) -- \t%s\e[0m", 31+proc, at, proc, fmt);
 #else
