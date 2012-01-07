@@ -12,8 +12,6 @@
 #define EPS (10E-10)
 #define KMAX (100)
 
-#define DUMP( n, a ) for(counter0=0;counter0<n;counter0++) HERE("dump array[%d]=%lf\n",counter0, a[counter0])
-
 /*
  * This program takes as input:
  *  - a matrix distributed over n processors
@@ -129,9 +127,6 @@ void bspcg(){
 
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
             destprocv,destindv, nu, nv, u, r);
-    HERE("Dumping A.u =\n");
-    // TODO huh??? 0 on calvert?
-    DUMP(nu,r);
     negate(nv, r);
     axpy(nv, 1.0, v, r, r);
 
@@ -152,6 +147,7 @@ void bspcg(){
             beta = rho/rho_old;
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
+            HERE("[Iteration %02d] rho  = %lle\n", k, rho_old);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
               destprocv,destindv,nu,nv,pvec,w);
@@ -200,7 +196,7 @@ void bspcg(){
         HERE("CHECKSUM     *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
 
-    HERE("Final error = %lf\n", rho);
+    HERE("Final error = %lle\n", rho);
 
 
     vecfreed(w);        vecfreed(pvec);
