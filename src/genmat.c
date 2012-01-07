@@ -40,7 +40,7 @@ int main (int argc, char** argv) {
     fprintf(stderr,"Generating matrix. N=%d, density=%lf, target nz=%d\n",
             N, sparsity, nz);
 
-    //TODO: use random() from stdlib!!!
+    // seed the random generator.
     srandom((unsigned)time(NULL));
 
 
@@ -187,17 +187,24 @@ int main (int argc, char** argv) {
 
     checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
 
+    // now quickly generate a test-vector to solve against:
+
+    double *vec = vecallocd(N);
+    for(v=0;v<N;v++)
+        vec[v]=ran();
+
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", newsize, newsize/((double)N*N));
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val);
+    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     fprintf(stderr,"========== THIS IS A DIVIDER ========== \n");
-    //outputMatrix(newsize, diag_i, diag_j, diag_val);
-    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val);
+    //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
     free(xs);
     free(ys);
     free(vals);
+    free(vec);
     free(diag_i);
     free(diag_j);
     free(diag_val);
@@ -405,7 +412,7 @@ double ran() {
 
 }
 
-void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
+void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in Mathematica format
 
@@ -433,10 +440,10 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
     // N vector entries, one proc.
     for(c=0;c<N-1;c++) {
         // each line is a value, in order of the vector indices.
-        printf("%lf,\n", ran());
+        printf("%lf,\n", vec[c]);
     }
     // last line without comma.
-    printf("%lf\n};\nvec // MatrixForm\n", ran());
+    printf("%lf\n};\nvec // MatrixForm\n", vec[N-1]);
 
     // and finally, for the paranoid:
     printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
@@ -444,7 +451,7 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v) {
     printf("correctAnswer // MatrixForm\n");
 
 }
-void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
+void outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in simple format, for one proc.
     // this is nice for testing CG without going through Mondriaan first.
@@ -471,12 +478,12 @@ void outputSimpleMatrix(int nz, int*i, int*j, double*v) {
     for(c=0;c<N;c++) {
         // each line is
         //   coordinate,processor,value
-        printf("%d %d %lf\n", c+1, 1, ran());
+        printf("%d %d %lf\n", c+1, 1, vec[c]);
     }
 
 
 }
-void outputMatrix(int nz, int*i, int*j, double*v) {
+void outputMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in EMM format.
 
@@ -498,7 +505,7 @@ void outputMatrix(int nz, int*i, int*j, double*v) {
     //size line:
     printf("%d\n", N);
     for(c=0;c<N;c++) {
-        printf("%lf\n", ran());
+        printf("%lf\n", vec[c]);
     }
 
 

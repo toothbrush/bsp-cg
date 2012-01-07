@@ -3,9 +3,11 @@ int    countDiags(int* i, int* j, int nz);
 void   addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present, int diags_needed);
 int    addTranspose(int nz, int* i, int* j, double* v, int maxsize, int* out_i, int* out_j, double* out_v);
 double ran();
-void   outputMatrix(int nz, int*i, int*j, double*v);
-void   outputMathematicaMatrix(int nz, int*i, int*j, double*v);
-void   outputSimpleMatrix(int nz, int*i, int*j, double*v);
+
+
+void   outputMatrix(int nz, int*i, int*j, double*v, double*vec);
+void   outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec);
+void   outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec);
 
 
 enum outputformat {
