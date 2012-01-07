@@ -52,7 +52,11 @@ void bspmv(int p, int s, int n, int nz, int nrows, int ncols,
     int i, j, k, status, nsums, *pinc;
     double sum, *psum, *pa, *vloc, *pvloc, *pvloc_end;
 
+#ifdef __GNUC__
     size_t tagsz, nbytes;
+#else
+    int tagsz, nbytes;
+#endif
 
     /****** Superstep 0. Initialize and register ******/
     for(i=0; i<nu; i++)

@@ -45,7 +45,11 @@ void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz,
     */
 
     int pA, mA, nA, nzA, nz, q, nzq, k, status, *Pstart, *ia, *ja;
+#ifdef __GNUC__
     size_t tagsz;
+#else
+    int tagsz;
+#endif
     double value, *a;
     indexpair t;
     FILE *fp;
