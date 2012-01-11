@@ -18,7 +18,7 @@ double *vecallocd(int n){
         pd= (double *)malloc(n*SZDBL);
         if (pd==NULL)
         {
-            printf("vecallocd: not enough memory");
+            fprintf(stderr,"vecallocd: not enough memory\n");
             exit(20);
         }
     }
@@ -37,7 +37,7 @@ ulong *vecalloculi(ulong n)
         pi= (ulong *)malloc(n*SZULL);
         if (pi==NULL)
         {
-            printf("vecalloculi: not enough memory");
+            fprintf(stderr,"vecalloculi: not enough memory\n");
             exit(20);
         }
     }
@@ -54,7 +54,7 @@ int *vecalloci(int n){
         pi= (int *)malloc(n*SZINT);
         if (pi==NULL)
         {
-            printf("vecalloci: not enough memory");
+            fprintf(stderr,"vecalloci: not enough memory\n");
             exit(20);
         }
     }
@@ -73,7 +73,7 @@ double **matallocd(int m, int n){
         ppd= (double **)malloc(m*sizeof(double *));
         if (ppd==NULL)
         {
-            printf("matallocd: not enough memory");
+            fprintf(stderr,"matallocd: not enough memory\n");
             exit(20);
         }
         if (n==0){
@@ -83,7 +83,7 @@ double **matallocd(int m, int n){
             pd= (double *)malloc(m*n*SZDBL); 
             if (pd==NULL)
             {
-                printf("matallocd: not enough memory");
+                fprintf(stderr,"matallocd: not enough memory\n");
                 exit(20);
             }
             ppd[0]=pd;
