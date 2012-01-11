@@ -79,7 +79,9 @@ void bspcg(){
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
 
-    printf("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
+    HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
+    if(s==0)
+        printf("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
 
     assert(nu==nv); // we want the distribution to be equal
 
@@ -192,35 +194,18 @@ void bspcg(){
 
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        /*HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);*/
         bsp_put(0, &u[i], answer, iglob*SZDBL, SZDBL);
     }
     bsp_sync();
 
     if(s==0) {
-        /*
-        for(i=0;i<n;i++)
-            printf("srcindu[%d]=%d\n", i, srcindu[i]);
-        for(i=0;i<n;i++)
-            printf("destindv[%d]=%d\n", i, destindv[i]);
-        for(i=0;i<n;i++)
-            printf("destprocv[%d]=%d\n", i, destprocv[i]);
-        for(i=0;i<n;i++)
-            printf("srcprocu[%d]=%d\n", i, srcprocu[i]);
-            */
 
-
-        printf("Final error = %Le\n", rho_old);
         printf("========= Solution =========\n");
-
+        printf("Final error = %Le\n", rho_old);
 
         for(i=0; i<n; i++) {
-
             printf("got item %d = %lf\n", i, answer[i]);
-
-
         }
-
     }
 
     bsp_pop_reg(answer);
