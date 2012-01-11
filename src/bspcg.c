@@ -9,7 +9,7 @@
 #include "libs/debug.h"
 // #include <Mondriaan.h>
 
-#define EPS (10E-10)
+#define EPS (10E-12)
 #define KMAX (100)
 
 /*
@@ -61,6 +61,11 @@ void bspcg(){
             bsp_abort(0);
         }
     }
+    if (s==0){
+        printf("CG solver\n");
+        printf("   using %d processors\n",p);
+    }
+
     /* Input of sparse matrix */
     bspinput2triple(matrixfile, p,s,&n,&nz,&ia,&ja,&a);
     HERE("Done reading matrix file.\n");
@@ -84,11 +89,6 @@ void bspcg(){
         printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
 
     assert(nu==nv); // we want the distribution to be equal
-
-    if (s==0){
-        printf("CG solver\n");
-        printf("   using %d processors\n",p);
-    }
 
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");

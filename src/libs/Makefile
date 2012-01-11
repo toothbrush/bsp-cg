@@ -1,5 +1,5 @@
 CC= mpicc
-CFLAGS= -DDEBUG -g -Wall # -flibrary-level 2 -bspfifo 10000  -fcombine-puts -fcombine-puts-buffer 256K,128M,4K
+CFLAGS= -Wall # -DDEBUG -g # -flibrary-level 2 -bspfifo 10000  -fcombine-puts -fcombine-puts-buffer 256K,128M,4K
 LFLAGS= -lm -lbsponmpi
 
 all: bspinprod.o bspmv.o vecio.o matsort.o paullib.o vecalloc-seq.o bspedupack.o

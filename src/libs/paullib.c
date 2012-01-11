@@ -125,9 +125,6 @@ void out(int proc, char*at, const char *fmt, ...)
 #ifdef DEBUG
     vfprintf(stderr, extended_fmt, argp);
     fflush(stderr);
-#else
-    vfprintf(stderr, fmt, argp);
-    fflush(stdout);
 #endif
 
     va_end(argp);
