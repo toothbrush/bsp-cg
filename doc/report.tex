@@ -1,10 +1,13 @@
 \documentclass[a4paper]{article}
 
 \usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{algorithmic}
+\usepackage{algorithm}
 
-\author{Paul van der Walt\footnote{\url{paul@@denknerd.org}}}
+\author{Paul van der Walt\footnote{\url{paul@@denknerd.org}}\\ \url{http://github.com/toothbrush/bsp-cg}}
 \date{\today}
-\title{A Parallel CG Algorithm}
+\title{A Parallel CG Algorithm\footnote{This work is inspired by Exercise 4.6 of PSC\cite{bisseling2004parallel}}}
 
 
 \begin{document}
@@ -15,13 +18,52 @@
     This is abstract
 \end{abstract}
 
+\newcommand{\ve}[1]{\ensuremath{\vec{#1}}}
+\newcommand{\mat}[1]{\ensuremath{\boldsymbol{#1}}}
 \section{Introduction}
 
+A well-known problem in problem in first-year linear algebra is the question that
+given some matrix \mat{A} and some vector \ve{b}, give \ve{x} such that the equation $\mat A \ve x = \ve b$ holds. A human would probably do Gaussian elimination, but
+in scientific computing, a very widely used algorithm that comes to mind is the conjugate gradient method, which can iteratively compute the solution of a linear system of equations whose matrix is \emph{symmetric} and \emph{positive definite}. 
+As is well-known, a matrix is symmetric when $\mat A = \mat A^T$ holds, and positive definite is defined as the property that $\ve x^T \mat A \ve x > 0$, for all $\ve x \neq \ve 0$.
 
-asdf\cite{bisseling2004parallel}
+The conjugate gradient algorithm is given in Algorithm \ref{alg:seq-cg}, and is due to Hestenes and Stiefel \cite{hestenes1952methods}. It has been proven that the algorithm converges \cite{golub1996matrix}.
+
+\begin{algorithm}
+    \caption{Sequential conjugate gradient algorithm.}
+\label{alg:seq-cg}
+\begin{algorithmic}
+    \REQUIRE ~\\
+             $\mat A$ symmetric, positive definite, $n\times n$ matrix,\\
+             $\ve  b$ vector of length $n$
+    \ENSURE  $\mat A \ve x = \ve b$\\~\\
+    \STATE $\ve x \leftarrow \ve{x_0}$ \COMMENT{initial guess}
+    \STATE $k \leftarrow 0$ \COMMENT{iteration number}
+    \STATE $\ve r \leftarrow \ve b - \mat A \ve x$
+    \STATE $\rho \leftarrow ||\ve r||^2$
+    \WHILE{$\sqrt{\rho} > \epsilon ||\ve b|| \wedge k < k_{max}$}
+        \IF{$k=0$}
+            \STATE $\ve p \leftarrow \ve r$
+        \ELSE
+            \STATE $\beta \leftarrow \rho/\rho_{old}$
+            \STATE $\ve p \leftarrow \ve r + \beta \ve p$
+        \ENDIF
+        \STATE $\vec w \leftarrow \mat A \ve p$
+        \STATE $\gamma \leftarrow \ve p . \ve w$
+        \STATE $\alpha \leftarrow \rho/\gamma$
+        \STATE $\ve x  \leftarrow \ve x + \alpha \ve p$
+        \STATE $\ve r  \leftarrow \ve r - \alpha \ve w$
+        \STATE $\rho_{old} \leftarrow \rho$
+        \STATE $\rho   \leftarrow || \ve r || ^2$
+        \STATE $k \leftarrow k+1$
+    \ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
 
 \section{The sequential algorithm}
 
+To get a feel for the algorithm the first step was to implement a sequential version. The source code 
 
 \section{The parallel algorithm}
 
@@ -29,6 +71,9 @@ asdf\cite{bisseling2004parallel}
 
 \subsection{Data distribution}
 
+\section{Matrix generation}
+
+% talk a bit about genmat.c
 
 \section{Experimental results}
 
