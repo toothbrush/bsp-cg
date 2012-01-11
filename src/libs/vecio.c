@@ -68,6 +68,7 @@ void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz,
         /* A is an mA by nA matrix with nzA nonzeros
            distributed over pA processors. */
         fscanf(fp,"%d %d %d %d\n", &mA, &nA, &nzA, &pA);
+        printf("Matrix has %d nonzeros.\n",nzA);
         if(pA!=p)
             bsp_abort("Error: p not equal to p(A)\n"); 
         if(mA!=nA)

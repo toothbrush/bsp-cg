@@ -230,8 +230,8 @@ int main(int argc, char **argv){
     P = bsp_nprocs();
 
     if(argc != 3){
-        HERE_NOP("Usage:\n");
-        HERE_NOP("\t%s [mtx-dist] [v-vec]\n\n", argv[0]);
+        fprintf(stderr, "Usage:\n");
+        fprintf(stderr, "\t%s [mtx-dist] [v-vec]\n\n", argv[0]);
         exit(1);
     }
 
