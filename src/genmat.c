@@ -25,7 +25,7 @@ int main (int argc, char** argv) {
 
     // read the desired size of the matrix from command line
     if (argc < 2) {
-        printf("Usage: %s N [mu]\n", argv[0]);
+        printf("Usage: %s N [mu] [sparsity]\n", argv[0]);
         exit(-1);
     }
 
@@ -38,6 +38,10 @@ int main (int argc, char** argv) {
 
     // maybe the user supplied a different mu
     if(argc > 2 && sscanf(argv[2], "%lf", &mu) != 1) {
+        exit(-2);
+    }
+    // maybe the user supplied a different sparsity
+    if(argc > 3 && sscanf(argv[3], "%lf", &sparsity) != 1) {
         exit(-2);
     }
 
@@ -79,36 +83,18 @@ int main (int argc, char** argv) {
     int uniques=0;
     bool found = false;
 
-    int i;
-    for(v=0;v<nz;v++) {
-        // loop through the array, and for each element, check if the preceding 
-        // portion of the array contains the same (i,j) pair. count first occurrences
-        // of (i,j)'s.
-
-        found=false;
-        for(i=0;i<v;i++) {
-            if(xs[v] == xs[i] &&
-               ys[v] == ys[i]) {
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            uniques ++;
-
-        }
-
-    }
-    // now rebuild an array which actually contains those nonzeroes.
-
     int* fin_i;
     int* fin_j;
     double* fin_val;
 
-    fin_i = vecalloci(uniques);
-    fin_j = vecalloci(uniques);
-    fin_val = vecallocd(uniques);
+    fin_i = vecalloci(nz);
+    fin_j = vecalloci(nz);
+    fin_val = vecallocd(nz);
     uniques=0;
+    int i;
+
+    // and rebuild an array which actually contains those nonzeroes.
+    // this is rather expensive...
     for(v=0;v<nz;v++) {
         // loop through the array, and for each element, check if the preceding 
         // portion of the array contains the same (i,j) pair. count first occurrences
@@ -123,8 +109,6 @@ int main (int argc, char** argv) {
             }
         }
         if(!found) {
-            // copy over.
-
             fin_i[uniques] = xs[v];
             fin_j[uniques] = ys[v];
             fin_val[uniques] = vals[v];
@@ -134,6 +118,9 @@ int main (int argc, char** argv) {
         }
 
     }
+    fin_i = realloc(fin_i, uniques*SZINT);
+    fin_j = realloc(fin_j, uniques*SZINT);
+    fin_val = realloc(fin_val, uniques*SZDBL);
 
     int diagonals_present = countDiags(fin_i, fin_j, uniques);
 #ifdef DEBUG
@@ -156,6 +143,10 @@ int main (int argc, char** argv) {
         diag_val[v]=fin_val[v];
     }
 
+    free(fin_i);
+    free(fin_j);
+    free(fin_val);
+
     addDiagonal(mu, diag_i, diag_j, diag_val, uniques, diagonals_present, N);
 #ifdef DEBUG
     for(v=0;v<newsize;v++)
@@ -166,10 +157,6 @@ int main (int argc, char** argv) {
 
     // things must be symmetric, but they aren't, yet
     // ... here's a good place to do the transposing thing.
-
-    free(fin_i);
-    free(fin_j);
-    free(fin_val);
 
     int max_symmetric_size = (newsize - N)*2 + N;
     int actual_symmetric_size = -1;
@@ -241,6 +228,7 @@ int addTranspose(int nz, int* i, int* j, double* v,
 
     bool done;
 
+    // also rather expensive
     for(c=0; c<nz; c++) {
         // for each original entry
 
