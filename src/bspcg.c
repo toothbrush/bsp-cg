@@ -81,7 +81,7 @@ void bspcg(){
 
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
     if(s==0)
-        printf("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
+        printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
 
     assert(nu==nv); // we want the distribution to be equal
 
@@ -201,10 +201,10 @@ void bspcg(){
     if(s==0) {
 
         printf("========= Solution =========\n");
-        printf("Final error = %Le\n", rho_old);
+        printf("Final error = %Le\n\n", rho_old);
 
         for(i=0; i<n; i++) {
-            printf("got item %d = %lf\n", i, answer[i]);
+            printf("solution[%d] = %lf\n", i, answer[i]);
         }
     }
 
