@@ -185,8 +185,16 @@ void bspcg(){
         HERE("CHECKSUM     *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
     }
 
-    bsp_push_reg(u,nu*SZDBL);
+    double* answer = vecallocd(n);
+    bsp_push_reg(answer,n*SZDBL);
 
+    bsp_sync();
+
+    for(i=0; i<nu; i++){
+        iglob=uindex[i];
+        /*HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);*/
+        bsp_put(0, &u[i], answer, iglob*SZDBL, SZDBL);
+    }
     bsp_sync();
 
     if(s==0) {
@@ -205,28 +213,19 @@ void bspcg(){
         printf("Final error = %Le\n", rho_old);
         printf("========= Solution =========\n");
 
-        double* answer = vecallocd(n);
 
         for(i=0; i<n; i++) {
 
-            // get value from the right proc
-
-            // TODO: get final answer to proc 0
-            // TODO2: try bsp_put()
-            bsp_get(srcprocu[i], u, srcindu[i]*SZDBL,&answer[uindex[i]],SZDBL);
-            HERE("doing: bsp_get(%d, u, %d*SZDBL,&answer[%d],SZDBL);\n",srcprocu[i], destindv[i],uindex[i]);
-            HERE("vindex[%d]=%d\n", i, vindex[i]);
-            HERE("destindv[%d]=%d\n", i, destindv[i]);
             printf("got item %d = %lf\n", i, answer[i]);
 
 
         }
 
-        vecfreed(answer);
     }
 
-    bsp_pop_reg(u);
+    bsp_pop_reg(answer);
 
+    vecfreed(answer);
     vecfreed(w);        vecfreed(pvec);
     vecfreed(r);        vecfreed(pold);
 
