@@ -85,6 +85,18 @@ To get a feel for the algorithm the first step was to implement a sequential ver
 
 \section{Bug fixed in BSPedupack}
 
+After some experiments with the latest versions of BPSonMPI, OpenMPI and
+BSPedupack, it became clear that there was a bug causing the parallel matrix-vector
+multiplication function
+\texttt{bspmv} to always return a zero-array (i.e. instead of the result vector \texttt{u} containing the answer to the multiplication of some \texttt{A} and \texttt{v}, it only contained zeroes).
+
+The problem turned out to be that the function \texttt{bspmv} used \texttt{bsp\_set\_tag\_size} with a second argument of type \texttt{int}, instead of \texttt{size\_t}, which BSPonMPI requires. When this had been changed (no other changes to the code were necessary), the examples compiled without warnings once again, and ran fine, producing the expected answers.
+
+The surprising thing was that previously BSPedupack had functioned without problems on my systems (Linux x86-64 and OS X), and it still worked on Huygens, which probably means they have an older library somewhere, or that their compiler (as opposed to my GNU CC compiler) is less strict in this sense.
+
+The difference between \texttt{size\_t} and \texttt{int}, is that the former is independent of the underlying architecture, while an \texttt{int} has a width which depends on the processor's instruction size. Evidently the IBM compiler is lenient and casts \texttt{int} to the struct \texttt{size\_t} without problems, but the GNU CC compiler sets the value of the \texttt{size\_t} to 0.
+
+%TODO add a diff
 
 \section{Code listings}
 % here we need
