@@ -77,6 +77,7 @@ int main (int argc, char** argv) {
 
     }
 
+    fprintf(stderr, "generated initial randoms\n");
 
     // oh my fucking god, look away, it's evil
 
@@ -116,6 +117,9 @@ int main (int argc, char** argv) {
             uniques ++;
 
         }
+
+        if(v%100 == 0)
+            fprintf(stderr, "rebuild uniques %lf%%\n", 100.0*((double)v/(double)nz));
 
     }
     fin_i = realloc(fin_i, uniques*SZINT);
@@ -285,6 +289,8 @@ int addTranspose(int nz, int* i, int* j, double* v,
 
             }
         }
+        if(c%100 == 0)
+            fprintf(stderr, "addTranspose %lf%%\n", 100.0*((double)c/(double)nz));
 
     }
 
@@ -402,6 +408,8 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present
             v[pos] = mu;
             pos++;
         }
+        if(c%100 == 0)
+            fprintf(stderr, "addDiagonal %lf%%\n", 100.0*((double)c/(double)diags_needed));
     }
 
 }
