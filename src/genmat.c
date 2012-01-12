@@ -172,7 +172,8 @@ int main (int argc, char** argv) {
         exit(44);
     }
 
-    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, N, diag_done);
+    fprintf(stderr, "newsize = %d\n", newsize);
+    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, newsize, diag_done);
     nz_generated=newsize;
 #ifdef DEBUG
     for(i=0;i<newsize;i++) {
@@ -197,18 +198,22 @@ int main (int argc, char** argv) {
     fprintf(stderr, "newsize = %d\n", newsize);
     fprintf(stderr, "%p\n", diag_j);
     new_i = realloc(diag_i  ,SZINT*newsize);
+    fprintf(stderr, "new_j = realloc(diag_j  ,SZINT*newsize);\n");
     new_j = realloc(diag_j  ,SZINT*newsize);
-    exit(0);
+    fprintf(stderr, "%p = realloc(%p  ,%lu*%d);\n", new_j, diag_j, SZINT,newsize);
     new_v = realloc(diag_val,SZDBL*newsize);
     fprintf(stderr, "new i and j = %p, %p, %p\n", new_i, new_j, new_v);
 
-    if(diag_i == NULL ||
-            diag_j == NULL ||
-            diag_val == NULL)
+    if(new_i == NULL ||
+            new_i == NULL ||
+            new_v == NULL)
     {
         printf("out of memory (2)!");
         exit(44);
     }
+    diag_i = new_i;
+    diag_j = new_j;
+    diag_val = new_v;
     addTranspose(newsize,diag_i,diag_j,diag_val,
                               nz_generated);
 
@@ -236,6 +241,7 @@ int main (int argc, char** argv) {
     //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
     //outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
+    free(diag_done);
     free(vec);
     free(diag_i);
     free(diag_j);
@@ -244,7 +250,7 @@ int main (int argc, char** argv) {
     return 0;
 }
 
-void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int diags_needed, bool* diags_done) {
+void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int newsize, bool* diags_done) {
 
     int c;
     int pos = nz_generated;
@@ -265,7 +271,9 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int dia
     }
     // now add mu to each diagonal value.
 
-    for(c=0;c<nz_generated+diags_needed; c++) {
+    fprintf(stderr, "doing for c=0;c<%d;c++\n", newsize);
+
+    for(c=0;c<newsize; c++) {
 
         if(i[c]==j[c]) {
             v[c] += mu;
