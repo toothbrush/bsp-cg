@@ -24,7 +24,7 @@ cg: $(OBJS) $(LIBOBJS)
 	$(CC) $(CFLAGS) -o cg $(OBJS) $(LIBOBJS) $(LFLAGS)
 
 genmat.o: genmat.c genmat.h $(LIBOBJS)
-	gcc $(CFLAGS) -c -o genmat.o genmat.c -DDEBUG
+	gcc $(CFLAGS) -c -o genmat.o genmat.c
 
 bspcg.o: bspcg.c
 	$(CC) $(CFLAGS) -c bspcg.c

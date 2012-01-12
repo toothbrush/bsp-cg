@@ -172,7 +172,6 @@ int main (int argc, char** argv) {
         exit(44);
     }
 
-    fprintf(stderr, "newsize = %d\n", newsize);
     addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, newsize, diag_done);
     nz_generated=newsize;
 #ifdef DEBUG
@@ -195,14 +194,9 @@ int main (int argc, char** argv) {
     int *new_j;
     double *new_v;
 
-    fprintf(stderr, "newsize = %d\n", newsize);
-    fprintf(stderr, "%p\n", diag_j);
     new_i = realloc(diag_i  ,SZINT*newsize);
-    fprintf(stderr, "new_j = realloc(diag_j  ,SZINT*newsize);\n");
     new_j = realloc(diag_j  ,SZINT*newsize);
-    fprintf(stderr, "%p = realloc(%p  ,%lu*%d);\n", new_j, diag_j, SZINT,newsize);
     new_v = realloc(diag_val,SZDBL*newsize);
-    fprintf(stderr, "new i and j = %p, %p, %p\n", new_i, new_j, new_v);
 
     if(new_i == NULL ||
             new_i == NULL ||
@@ -234,12 +228,12 @@ int main (int argc, char** argv) {
     for(i=0;i<N;i++)
         vec[i]=ran();
 
-    fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", newsize, newsize/((double)N*N));
+    fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf (desired=%lf)\n", newsize, newsize/((double)N*N), sparsity);
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
-    //outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
     free(diag_done);
     free(vec);
@@ -261,8 +255,6 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int new
             j[pos] = c;
             v[pos] = ran()*2.0-1.0;
 
-            fprintf(stderr, "adding diag %d to array pos %d\n", c, pos);
-
             pos++;
 
 
@@ -270,8 +262,6 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int new
 
     }
     // now add mu to each diagonal value.
-
-    fprintf(stderr, "doing for c=0;c<%d;c++\n", newsize);
 
     for(c=0;c<newsize; c++) {
 
@@ -380,6 +370,7 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // Mathematica "header"
 
+    printf("Print[\"reading matrix...\"]\n");
     printf("somemat = SparseArray[ { \n");
     // the value lines: i j value:
     int c;
@@ -398,6 +389,7 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
     printf("(* ======= vector v follows ====== *)\n");
 
 
+    printf("Print[\"reading vector...\"]\n");
     printf("vec = {\n");
     // N vector entries, one proc.
     for(c=0;c<N-1;c++) {
@@ -408,8 +400,9 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
     printf("%lf\n};\n(* vec // MatrixForm *)\n", vec[N-1]);
 
     // and finally, for the paranoid:
+    printf("Print[\"checking PosDef then Symm...\"]\n");
     printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
-    printf("correctAnswer = LinearSolve[somemat,vec];\n");
+    printf("(* correctAnswer = LinearSolve[somemat,vec]; *)\n");
     printf("(* correctAnswer // MatrixForm *)\n");
 
 }
