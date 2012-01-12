@@ -97,6 +97,14 @@ int main (int argc, char** argv) {
             // lower triangular half
             if(x<y && sparsity > ran()) {
 
+                if(nz_generated > nz) {
+                    // this should NEVER happen, although all that's
+                    // stopping it from happening is our ran() being
+                    // well-behaved...........
+                    printf("EEK! something went wrong!!\n");
+                    exit(666);
+                }
+
                 xs[nz_generated]= i/N;
                 ys[nz_generated]= i%N;
                 // simulate the distribution of values which
@@ -123,15 +131,13 @@ int main (int argc, char** argv) {
 
     fprintf(stderr, "generated initial randoms\n");
 
-    // oh my fucking god, look away, it's evil
-
     int diagonals_present = 0;
     for(i=0; i<nz_generated; i++) {
         if(xs[i]==ys[i])
             diagonals_present++;
     }
 
-    printf("generated %d nzeros, array was %d big.\n", nz_generated, nz);
+    fprintf(stderr,"generated %d nzeros, array was %d big.\n", nz_generated, nz);
 
 
 #ifdef DEBUG
@@ -190,7 +196,7 @@ int main (int argc, char** argv) {
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", newsize, newsize/((double)N*N));
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     fprintf(stderr,"========== THIS IS A DIVIDER ========== \n");
     //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
     outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
@@ -282,17 +288,6 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
     free(rowtotal);
     free(diagonals);
 
-}
-
-int countDiags(int* i, int* j, int nz) {
-    int diags=0;
-    int c;
-    for (c=0; c<nz; c++) {
-        if(i[c]==j[c])
-            diags++;
-    }
-
-    return diags;
 }
 
 /*
