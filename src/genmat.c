@@ -62,18 +62,36 @@ int main (int argc, char** argv) {
     ys = vecalloci(nz);
     vals = vecallocd(nz);
 
-    int v;
+    int v,i,nz_generated;
+    nz_generated = 0;
 
+    bool* diag_done;
+    diag_done = malloc(N*sizeof(bool));
 
-    for (v=0; v<nz; v++) {
+    for(i = 0; i<N; i++) {
+        diag_done[i] = false;
+    }
 
-        xs[v]= (double)N * ran();
-        ys[v]= (double)N * ran();
-        vals[v]= ran()*2-1; // [-1,1]
+    i = 0;
+    while(i< N*N && nz_generated < nz) {
+
+        xs[nz_generated]= i/N;
+        ys[nz_generated]= i%N;
+        vals[nz_generated]= ran()*2.0-1.0; // [-1,1]
+
+        if(xs[nz_generated] == ys[nz_generated])
+            diag_done[xs[nz_generated]] = true;
 
 #ifdef DEBUG
-        fprintf(stderr,"generated A[%d][%d]=%lf\n", xs[v],ys[v], vals[v]);
+        fprintf(stderr,"generated A[%d][%d]=%lf\n", xs[nz_generated]
+                                                  , ys[nz_generated]
+                                                  , vals[nz_generated]);
 #endif
+
+        nz_generated++;
+
+        i += sparsity * (ran() + 0.5) * N; // advance expected
+
 
     }
 
@@ -81,77 +99,35 @@ int main (int argc, char** argv) {
 
     // oh my fucking god, look away, it's evil
 
-    int uniques=0;
-    bool found = false;
-
-    int* fin_i;
-    int* fin_j;
-    double* fin_val;
-
-    fin_i = vecalloci(nz);
-    fin_j = vecalloci(nz);
-    fin_val = vecallocd(nz);
-    uniques=0;
-    int i;
-
-    // and rebuild an array which actually contains those nonzeroes.
-    // this is rather expensive...
-    for(v=0;v<nz;v++) {
-        // loop through the array, and for each element, check if the preceding 
-        // portion of the array contains the same (i,j) pair. count first occurrences
-        // of (i,j)'s.
-
-        found=false;
-        for(i=0;i<v;i++) {
-            if(xs[v] == xs[i] &&
-               ys[v] == ys[i]) {
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            fin_i[uniques] = xs[v];
-            fin_j[uniques] = ys[v];
-            fin_val[uniques] = vals[v];
-
-            uniques ++;
-
-        }
-
-        if(v%100 == 0)
-            fprintf(stderr, "rebuild uniques %lf%%\n", 100.0*((double)v/(double)nz));
-
+    int diagonals_present = 0;
+    for(i=0; i<N; i++) {
+        if(diag_done[i])
+            diagonals_present++;
     }
-    fin_i = realloc(fin_i, uniques*SZINT);
-    fin_j = realloc(fin_j, uniques*SZINT);
-    fin_val = realloc(fin_val, uniques*SZDBL);
 
-    int diagonals_present = countDiags(fin_i, fin_j, uniques);
+
 #ifdef DEBUG
     fprintf(stderr, "found %d diagonal(s), still need %d more.\n", diagonals_present, (N-diagonals_present));
 #endif
 
-    int newsize = uniques + (N - diagonals_present);
+    int newsize = nz_generated + (N - diagonals_present);
     int* diag_i;
     int* diag_j;
     double* diag_val;
 
-    diag_i = vecalloci(newsize);
-    diag_j = vecalloci(newsize);
-    diag_val = vecallocd(newsize);
+    diag_i = realloc(xs,SZINT*newsize);
+    diag_j = realloc(ys,SZINT*newsize);
+    diag_val = realloc(vals,SZDBL*newsize);
 
-    for(v=0; v<uniques; v++) {
-        // copy the old values across
-        diag_i[v]=fin_i[v];
-        diag_j[v]=fin_j[v];
-        diag_val[v]=fin_val[v];
+    if(diag_i == NULL ||
+            diag_j == NULL ||
+            diag_val == NULL)
+    {
+        printf("out of memory!");
+        exit(44);
     }
 
-    free(fin_i);
-    free(fin_j);
-    free(fin_val);
-
-    addDiagonal(mu, diag_i, diag_j, diag_val, uniques, diagonals_present, N);
+    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, diagonals_present, N, diag_done);
 #ifdef DEBUG
     for(v=0;v<newsize;v++)
         fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
@@ -164,6 +140,9 @@ int main (int argc, char** argv) {
 
     int max_symmetric_size = (newsize - N)*2 + N;
     int actual_symmetric_size = -1;
+
+    int *fin_i, *fin_j;
+    double *fin_val;
     fin_i = vecalloci(max_symmetric_size);
     fin_j = vecalloci(max_symmetric_size);
     fin_val = vecallocd(max_symmetric_size);
@@ -202,9 +181,6 @@ int main (int argc, char** argv) {
     //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
     outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
-    free(xs);
-    free(ys);
-    free(vals);
     free(vec);
     free(diag_i);
     free(diag_j);
@@ -324,17 +300,13 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
 
     for(c = 0; c< nz; c++)
     {
-        if(i[c] != j[c]) {
-            rowtotal[i[c]] += fabs(v[c]);
-        }
-    }
-
-    // find diagonals:
-    for(c = 0; c<nz; c++)
-    {
+        // find diagonals:
         if(i[c] == j[c]){
             diagonals[i[c]] = v[c];
+        } else {
+            rowtotal[i[c]] += fabs(v[c]);
         }
+
     }
 
     // foreach diag, check.
@@ -369,48 +341,35 @@ int countDiags(int* i, int* j, int nz) {
     return diags;
 }
 
-void addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present, int diags_needed) {
+void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int diags_present, int diags_needed, bool* diags_done) {
 
-    int c,c2;
-    int pos = nz; // where to start appending.
+    int c;
+    int pos = nz_generated;
+    for(c=0; c<N; c++) {
+        if(!diags_done[c]){
 
-    bool found;
-    // for each diagonal element, check if it exists, if not, append.
-    for(c=1;c<=diags_needed;c++)
-    {
-        found = false;
-        for(c2=0;c2<nz;c2++) {
-            if(i[c2] == j[c2] && // is a diagonal
-               j[c2] == c-1)     // is the diag we are looking for.
-            {
-                found = true;
-#ifdef DEBUG
-                fprintf(stderr, "found a diag.\n");
-#endif
+            i[pos] = c;
+            j[pos] = c;
+            v[pos] = ran()*2.0-1.0;
 
-                v[c2] += mu;
-                if (v[c2] <= 0){
-                    fprintf(stderr, "ERROR: not all diagonals are >0!\n");
-                    exit(22);
-                }
 
-                break;
-
-            }
-        }
-        if (!found) {
-            // append
-#ifdef DEBUG
-            fprintf(stderr, "not found, appending!\n");
-#endif
-            i[pos] = c-1;
-            j[pos] = c-1;
-            v[pos] = mu;
             pos++;
+
+
         }
-        if(c%100 == 0)
-            fprintf(stderr, "addDiagonal %lf%%\n", 100.0*((double)c/(double)diags_needed));
+
     }
+    // now add mu to each diagonal value.
+
+    for(c=0;c<nz_generated+diags_needed; c++) {
+
+        if(i[c]==j[c]) {
+            v[c]+= mu;
+
+        }
+
+    }
+
 
 }
 
@@ -440,11 +399,11 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
     printf("{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mathematica expects 1-based coordinates.
 
     printf("} ] ;\n");
-    printf("somemat // MatrixForm\n");
+    printf("(* somemat // MatrixForm *)\n");
 
     printf("\n\n\n");
 
-    fprintf(stderr, "(* ======= vector v follows ====== *)\n");
+    printf("(* ======= vector v follows ====== *)\n");
 
 
     printf("vec = {\n");
@@ -454,12 +413,12 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
         printf("%lf,\n", vec[c]);
     }
     // last line without comma.
-    printf("%lf\n};\nvec // MatrixForm\n", vec[N-1]);
+    printf("%lf\n};\n(* vec // MatrixForm *)\n", vec[N-1]);
 
     // and finally, for the paranoid:
     printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
     printf("correctAnswer = LinearSolve[somemat,vec];\n");
-    printf("correctAnswer // MatrixForm\n");
+    printf("(* correctAnswer // MatrixForm *)\n");
 
 }
 void outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec) {
