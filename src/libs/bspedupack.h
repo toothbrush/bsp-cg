@@ -16,6 +16,7 @@
 
 #define SZDBL (sizeof(double))
 #define SZINT (sizeof(int))
+#define SZCHAR (sizeof(char))
 #define TRUE (1)
 #define FALSE (0)
 // #define MAX(a,b) ((a)>(b) ? (a) : (b))
