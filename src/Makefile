@@ -1,5 +1,5 @@
 CC= mpicc
-CFLAGS= -g -Wall
+CFLAGS= -ggdb -Wall -g
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
 # the objects required to build the final executable CG
@@ -18,13 +18,13 @@ seq: $(OBJS_SEQ) $(LIBOBJS)
 	gcc -o seq $(OBJS_SEQ) $(LIB_OBJS) -lm
 
 genmat: $(OBJS_GEN) $(LIBOBJS)
-	gcc -o genmat $(OBJS_GEN) $(LIB_OBJS) -lm
+	gcc $(CFLAGS) -o genmat $(OBJS_GEN) $(LIB_OBJS) -lm
 
 cg: $(OBJS) $(LIBOBJS)
 	$(CC) $(CFLAGS) -o cg $(OBJS) $(LIBOBJS) $(LFLAGS)
 
 genmat.o: genmat.c genmat.h $(LIBOBJS)
-	gcc -c -o genmat.o genmat.c -DDEBUG
+	gcc $(CFLAGS) -c -o genmat.o genmat.c -DDEBUG
 
 bspcg.o: bspcg.c
 	$(CC) $(CFLAGS) -c bspcg.c

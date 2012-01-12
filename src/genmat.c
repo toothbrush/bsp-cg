@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "libs/vecalloc-seq.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,33 +58,37 @@ int main (int argc, char** argv) {
     // seed the random generator.
     srandom((unsigned)time(NULL));
 
+    fprintf(stderr,"INT_MAX = %d\n", INT_MAX);
 
     xs = vecalloci(nz);
     ys = vecalloci(nz);
     vals = vecallocd(nz);
 
-    int v,i,nz_generated;
+    bool* diag_done;
+    diag_done = malloc(N*sizeof(bool));
+
+    int i;
+    for(i = 0; i<N; i++) {
+        diag_done[i] = false;
+    }
+
+    int nz_generated;
 
     int x,y;
     nz_generated = 0;
     double fake_transpose;
-    // try each matrix location and generate a value with some
-    // probability.
-    for(i=0; i< N*N; i++) {
+    x=0;y=0;
+    while(x<N && y<N) { //don't escape matrix bounds.
 
-        x=i/N;
-        y=i%N;
-
+        fprintf(stderr,"progress: %lf%%\n", 100*nz_generated/(double)(nz/2.0));
         if(x==y) {
             //diagonal, so always generate.
-            //nice, guarantee that all diagonals are set.
 
             xs[nz_generated]=x;
             ys[nz_generated]=y;
             vals[nz_generated]=ran()*2.0-1.0;
+            diag_done[x] = true;
 
-            // and it's a diagonal, so add MU
-            vals[nz_generated] += mu;
 #ifdef DEBUG
             fprintf(stderr,"generated A[//][%d]=%lf\n"
                                                       , ys[nz_generated]
@@ -95,7 +100,7 @@ int main (int argc, char** argv) {
         } else {
             // not a diagonal. only add if in
             // lower triangular half
-            if(x<y && sparsity > ran()) {
+            if(x<y) {
 
                 if(nz_generated > nz) {
                     // this should NEVER happen, although all that's
@@ -105,8 +110,8 @@ int main (int argc, char** argv) {
                     exit(666);
                 }
 
-                xs[nz_generated]= i/N;
-                ys[nz_generated]= i%N;
+                xs[nz_generated]= x;
+                ys[nz_generated]= y;
                 // simulate the distribution of values which
                 // would occur if we do A+A^T afterwards.
                 if (ran() < sparsity) {
@@ -125,7 +130,11 @@ int main (int argc, char** argv) {
 
             }
         }
-
+        x += 1/sparsity * (ran() + 0.5);
+        if( x >= N ) {
+            y += x/N;
+            x  = x%N;
+        }
 
     }
 
@@ -144,17 +153,15 @@ int main (int argc, char** argv) {
     fprintf(stderr, "found %d diagonal(s), still need %d more.\n", diagonals_present, (N-diagonals_present));
 #endif
 
-    // now we explicitly fill the array with the
-    // upper triangle values
-
-    int newsize = nz_generated * 2 - N; //number of real nonzeros, don't
-                                        // count diagonals twice.
+    // add the missing diagonals, and add mu to each diagonal.
+    int newsize = nz_generated + (N - diagonals_present);
+    fprintf(stderr,"reallocating arrays to %d long\n", newsize);
     int* diag_i;
     int* diag_j;
     double* diag_val;
 
-    diag_i = realloc(xs,SZINT*newsize);
-    diag_j = realloc(ys,SZINT*newsize);
+    diag_i   = realloc(xs  ,SZINT*newsize);
+    diag_j   = realloc(ys  ,SZINT*newsize);
     diag_val = realloc(vals,SZDBL*newsize);
 
     if(diag_i == NULL ||
@@ -165,24 +172,53 @@ int main (int argc, char** argv) {
         exit(44);
     }
 
+    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, N, diag_done);
+    nz_generated=newsize;
 #ifdef DEBUG
-    fprintf(stderr, "Going to make symmetric now...\n");
+    for(i=0;i<newsize;i++) {
+        fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[i],diag_j[i], diag_val[i]);
+    }
+
+    fprintf(stderr, "Going to make symmetric now... (nz_generated = %d)\n", nz_generated);
 #endif
+
+    // now we explicitly fill the array with the
+    // upper triangle values
 
     // things must be symmetric, but they aren't, yet
     // ... here's a good place to do the transposing thing.
 
+    newsize = nz_generated * 2 - N; //number of real nonzeros, don't
+                                    // count diagonals twice.
+    int *new_i;
+    int *new_j;
+    double *new_v;
 
+    fprintf(stderr, "newsize = %d\n", newsize);
+    fprintf(stderr, "%p\n", diag_j);
+    new_i = realloc(diag_i  ,SZINT*newsize);
+    new_j = realloc(diag_j  ,SZINT*newsize);
+    exit(0);
+    new_v = realloc(diag_val,SZDBL*newsize);
+    fprintf(stderr, "new i and j = %p, %p, %p\n", new_i, new_j, new_v);
+
+    if(diag_i == NULL ||
+            diag_j == NULL ||
+            diag_val == NULL)
+    {
+        printf("out of memory (2)!");
+        exit(44);
+    }
     addTranspose(newsize,diag_i,diag_j,diag_val,
                               nz_generated);
 
 #ifdef DEBUG
-    for(v=0;v<newsize;v++)
+    for(i=0;i<newsize;i++)
         // to make diags stand out.
-        if(diag_i[v]==diag_j[v])
-            fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", diag_i[v],diag_j[v], diag_val[v]);
+        if(diag_i[i]==diag_j[i])
+            fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", diag_i[i],diag_j[i], diag_val[i]);
         else
-            fprintf(stderr,"after transpose A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
+            fprintf(stderr,"after transpose A[%d][%d]=%lf\n", diag_i[i],diag_j[i], diag_val[i]);
 #endif
 
     checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
@@ -190,16 +226,15 @@ int main (int argc, char** argv) {
     // now quickly generate a test-vector to solve against:
 
     double *vec = vecallocd(N);
-    for(v=0;v<N;v++)
-        vec[v]=ran();
+    for(i=0;i<N;i++)
+        vec[i]=ran();
 
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", newsize, newsize/((double)N*N));
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
-    fprintf(stderr,"========== THIS IS A DIVIDER ========== \n");
+    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
-    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    //outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
     free(vec);
     free(diag_i);
@@ -209,13 +244,45 @@ int main (int argc, char** argv) {
     return 0;
 }
 
+void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int diags_needed, bool* diags_done) {
+
+    int c;
+    int pos = nz_generated;
+    for(c=0; c<N; c++) {
+        if(!diags_done[c]){
+
+            i[pos] = c;
+            j[pos] = c;
+            v[pos] = ran()*2.0-1.0;
+
+            fprintf(stderr, "adding diag %d to array pos %d\n", c, pos);
+
+            pos++;
+
+
+        }
+
+    }
+    // now add mu to each diagonal value.
+
+    for(c=0;c<nz_generated+diags_needed; c++) {
+
+        if(i[c]==j[c]) {
+            v[c] += mu;
+
+        }
+
+    }
+
+
+}
+
 /**
  * This function takes some matrix A and produces (almost) A' = A + A^T, which is
  * a symmetric matrix. Note that the diagonals are not added.
  *
- * @return number of nonzeros after transpose has been done.
  */
-int addTranspose(int final_size, int* i, int* j, double* v,
+void addTranspose(int final_size, int* i, int* j, double* v,
                  int nz_generated) {
 
     int pos = nz_generated;
@@ -246,7 +313,7 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
     // then find diagonals
     // check each diagonal against the summed rows.
 
-    int c,c2;
+    int c;
     double * rowtotal;
     rowtotal = vecallocd(N);
     double * diagonals;
