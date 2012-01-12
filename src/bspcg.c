@@ -7,10 +7,9 @@
 #include "libs/vecio.h"
 #include "libs/paullib.h"
 #include "libs/debug.h"
-// #include <Mondriaan.h>
 
 #define EPS (10E-12)
-#define KMAX (100)
+#define KMAX (1000)
 
 /*
  * This program takes as input:
@@ -171,7 +170,7 @@ void bspcg(){
     if (s==0){
         HERE("End of matrix-vector multiplications.\n");
         HERE("Initialization took only %.6lf seconds.\n", time1-time0);
-        printf("%d CG iterations took only %.6lf seconds.\n", k-1, (time2-time1));
+        printf("%d CG iterations took only %.6lf seconds (KMAX = %d).\n", k-1, (time2-time1), KMAX);
         printf("The computed solution is:\n");
     }
 
@@ -203,9 +202,11 @@ void bspcg(){
         printf("========= Solution =========\n");
         printf("Final error = %Le\n\n", rho_old);
 
+#ifdef DEBUG
         for(i=0; i<n; i++) {
             printf("solution[%d] = %lf\n", i, answer[i]);
         }
+#endif
     }
 
     bsp_pop_reg(answer);
