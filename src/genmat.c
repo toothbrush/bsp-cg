@@ -63,34 +63,60 @@ int main (int argc, char** argv) {
     vals = vecallocd(nz);
 
     int v,i,nz_generated;
+
+    int x,y;
     nz_generated = 0;
+    double fake_transpose;
+    // try each matrix location and generate a value with some
+    // probability.
+    for(i=0; i< N*N; i++) {
 
-    bool* diag_done;
-    diag_done = malloc(N*sizeof(bool));
+        x=i/N;
+        y=i%N;
 
-    for(i = 0; i<N; i++) {
-        diag_done[i] = false;
-    }
+        if(x==y) {
+            //diagonal, so always generate.
+            //nice, guarantee that all diagonals are set.
 
-    i = 0;
-    while(i< N*N && nz_generated < nz) {
+            xs[nz_generated]=x;
+            ys[nz_generated]=y;
+            vals[nz_generated]=ran()*2.0-1.0;
 
-        xs[nz_generated]= i/N;
-        ys[nz_generated]= i%N;
-        vals[nz_generated]= ran()*2.0-1.0; // [-1,1]
-
-        if(xs[nz_generated] == ys[nz_generated])
-            diag_done[xs[nz_generated]] = true;
-
+            // and it's a diagonal, so add MU
+            vals[nz_generated] += mu;
 #ifdef DEBUG
-        fprintf(stderr,"generated A[%d][%d]=%lf\n", xs[nz_generated]
-                                                  , ys[nz_generated]
-                                                  , vals[nz_generated]);
+            fprintf(stderr,"generated A[//][%d]=%lf\n"
+                                                      , ys[nz_generated]
+                                                      , vals[nz_generated]);
 #endif
 
-        nz_generated++;
+            nz_generated++;
 
-        i += sparsity * (ran() + 0.5) * N; // advance expected
+        } else {
+            // not a diagonal. only add if in
+            // lower triangular half
+            if(x<y && sparsity > ran()) {
+
+                xs[nz_generated]= i/N;
+                ys[nz_generated]= i%N;
+                // simulate the distribution of values which
+                // would occur if we do A+A^T afterwards.
+                if (ran() < sparsity) {
+                    fake_transpose    = ran()*2.0-1.0;
+                    vals[nz_generated]= ran()*2.0-1.0 + fake_transpose;
+                } else {
+                    vals[nz_generated]= ran()*2.0-1.0;
+                }
+#ifdef DEBUG
+            fprintf(stderr,"generated A[%d][%d]=%lf\n", xs[nz_generated]
+                                                      , ys[nz_generated]
+                                                      , vals[nz_generated]);
+#endif
+                nz_generated++;
+
+
+            }
+        }
 
 
     }
@@ -100,17 +126,23 @@ int main (int argc, char** argv) {
     // oh my fucking god, look away, it's evil
 
     int diagonals_present = 0;
-    for(i=0; i<N; i++) {
-        if(diag_done[i])
+    for(i=0; i<nz_generated; i++) {
+        if(xs[i]==ys[i])
             diagonals_present++;
     }
+
+    printf("generated %d nzeros, array was %d big.\n", nz_generated, nz);
 
 
 #ifdef DEBUG
     fprintf(stderr, "found %d diagonal(s), still need %d more.\n", diagonals_present, (N-diagonals_present));
 #endif
 
-    int newsize = nz_generated + (N - diagonals_present);
+    // now we explicitly fill the array with the
+    // upper triangle values
+
+    int newsize = nz_generated * 2 - N; //number of real nonzeros, don't
+                                        // count diagonals twice.
     int* diag_i;
     int* diag_j;
     double* diag_val;
@@ -127,43 +159,25 @@ int main (int argc, char** argv) {
         exit(44);
     }
 
-    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, diagonals_present, N, diag_done);
 #ifdef DEBUG
-    for(v=0;v<newsize;v++)
-        fprintf(stderr,"after addDiagonal A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
-
     fprintf(stderr, "Going to make symmetric now...\n");
 #endif
 
     // things must be symmetric, but they aren't, yet
     // ... here's a good place to do the transposing thing.
 
-    int max_symmetric_size = (newsize - N)*2 + N;
-    int actual_symmetric_size = -1;
 
-    int *fin_i, *fin_j;
-    double *fin_val;
-    fin_i = vecalloci(max_symmetric_size);
-    fin_j = vecalloci(max_symmetric_size);
-    fin_val = vecallocd(max_symmetric_size);
-
-    actual_symmetric_size = addTranspose(newsize,diag_i,diag_j,diag_val,
-                              max_symmetric_size,fin_i, fin_j, fin_val);
+    addTranspose(newsize,diag_i,diag_j,diag_val,
+                              nz_generated);
 
 #ifdef DEBUG
-    for(v=0;v<actual_symmetric_size;v++)
+    for(v=0;v<newsize;v++)
         // to make diags stand out.
-        if(fin_i[v]==fin_j[v])
-            fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", fin_i[v],fin_j[v], fin_val[v]);
+        if(diag_i[v]==diag_j[v])
+            fprintf(stderr,"after transpose A[%d][%d]=%lf \\\\\n", diag_i[v],diag_j[v], diag_val[v]);
         else
-            fprintf(stderr,"after transpose A[%d][%d]=%lf\n", fin_i[v],fin_j[v], fin_val[v]);
+            fprintf(stderr,"after transpose A[%d][%d]=%lf\n", diag_i[v],diag_j[v], diag_val[v]);
 #endif
-
-    // swap stuff around here:
-    free(diag_i); free(diag_j); free(diag_val);
-
-    diag_i = fin_i; diag_j = fin_j; diag_val = fin_val;
-    newsize = actual_symmetric_size;
 
     checkStrictDiagonallyDominant(diag_i,diag_j,diag_val, newsize);
 
@@ -195,85 +209,25 @@ int main (int argc, char** argv) {
  *
  * @return number of nonzeros after transpose has been done.
  */
-int addTranspose(int nz, int* i, int* j, double* v,
-                 int max,int* out_i, int* out_j, double* out_v) {
+int addTranspose(int final_size, int* i, int* j, double* v,
+                 int nz_generated) {
 
-    int c,c2;
-    int actual_nonzeroes=0;
+    int pos = nz_generated;
 
-    int *done_i, *done_j;
-    done_i = vecalloci(nz);
-    done_j = vecalloci(nz);
-    int done_n = 0;
+    int c;
+    for(c=0;c<nz_generated;c++) {
 
-    bool done;
+        if(i[c] != j[c]) {
+            // not a diagonal, so copy over.
 
-    // also rather expensive
-    for(c=0; c<nz; c++) {
-        // for each original entry
+            i[pos] = j[c];
+            j[pos] = i[c];
+            v[pos] = v[c];
 
-        if(i[c] == j[c]) {
-            // original diagonal
+            pos++;
 
-            out_i[actual_nonzeroes] = i[c];
-            out_j[actual_nonzeroes] = j[c];
-            out_v[actual_nonzeroes] = v[c];
-            actual_nonzeroes++;
-
-        } else {
-            // original non-diagonal
-
-            // check if it has been done.
-            done = false;
-            for(c2=0; c2 < done_n; c2++) {
-                if((done_i[c2] == i[c] && done_j[c2] == j[c]) ||
-                   (done_j[c2] == i[c] && done_i[c2] == j[c])  ) {
-                    done = true;
-                }
-            }
-
-            // if not yet done,
-            if(! done) {
-
-                //add v[c] into out_*
-                out_i[actual_nonzeroes] = i[c];
-                out_j[actual_nonzeroes] = j[c];
-                out_v[actual_nonzeroes] = 0;
-
-                out_v[actual_nonzeroes] += v[c];
-                for(c2=0; c2 < nz; c2++) {
-                    // add all transpose-components
-
-                    if(i[c2] == j[c] &&
-                       j[c2] == i[c]) {
-                        out_v[actual_nonzeroes] += v[c2];
-                    }
-
-                }
-                actual_nonzeroes++;
-
-                // and place it in the transposed position.
-
-                out_i[actual_nonzeroes] = j[c];
-                out_j[actual_nonzeroes] = i[c];
-                out_v[actual_nonzeroes] = out_v[actual_nonzeroes -1];
-                actual_nonzeroes++;
-
-                done_i[done_n] = i[c];
-                done_j[done_n] = j[c];
-                done_n ++;
-
-            }
         }
-        if(c%100 == 0)
-            fprintf(stderr, "addTranspose %lf%%\n", 100.0*((double)c/(double)nz));
-
     }
-
-    free(done_i);
-    free(done_j);
-
-    return actual_nonzeroes;
 
 }
 
@@ -339,38 +293,6 @@ int countDiags(int* i, int* j, int nz) {
     }
 
     return diags;
-}
-
-void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int diags_present, int diags_needed, bool* diags_done) {
-
-    int c;
-    int pos = nz_generated;
-    for(c=0; c<N; c++) {
-        if(!diags_done[c]){
-
-            i[pos] = c;
-            j[pos] = c;
-            v[pos] = ran()*2.0-1.0;
-
-
-            pos++;
-
-
-        }
-
-    }
-    // now add mu to each diagonal value.
-
-    for(c=0;c<nz_generated+diags_needed; c++) {
-
-        if(i[c]==j[c]) {
-            v[c]+= mu;
-
-        }
-
-    }
-
-
 }
 
 /*

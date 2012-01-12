@@ -2,8 +2,7 @@
 
 void   checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz);
 int    countDiags(int* i, int* j, int nz);
-void   addDiagonal(double mu, int* i, int* j, double* v, int nz, int diags_present, int diags_needed, bool* diags_done);
-int    addTranspose(int nz, int* i, int* j, double* v, int maxsize, int* out_i, int* out_j, double* out_v);
+int    addTranspose(int nz, int* i, int* j, double* v, int maxsize);
 double ran();
 
 // output functions
