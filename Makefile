@@ -12,3 +12,8 @@ src: force-look
 
 force-look:
 	@true
+
+cleanmats:
+	rm *.nb
+	rm *.emm
+	rm *.log

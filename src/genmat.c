@@ -238,7 +238,7 @@ int main (int argc, char** argv) {
 
     //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     outputMondriaanMatrix(newsize, diag_i, diag_j, diag_val, vec);
-    //outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
     free(diag_done);
     free(vec);

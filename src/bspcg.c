@@ -71,7 +71,8 @@ void bspcg(){
 
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
-    HERE("Done converting to ICRS.\n");
+    HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
+    assert(nrows == ncols);
     vecfreei(ja);
 
     /* Read vector distributions */
@@ -79,7 +80,7 @@ void bspcg(){
     HERE("Loaded distribution vec v.\n");
     for(i=0; i<nv; i++){
         iglob= vindex[i];
-        HERE("original input vec %d = %lf\n", iglob, v[i]);
+      //  HERE("original input vec %d = %lf\n", iglob, v[i]);
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
@@ -88,7 +89,7 @@ void bspcg(){
     if(s==0)
         printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
 
-    assert(nu==nv); // we want the distribution to be equal
+    assert(nu==nv); // we want the distributions to be equal
 
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");

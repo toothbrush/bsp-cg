@@ -1,6 +1,7 @@
 include ../cc.mk
 LFLAGS= -lm -lbsponmpi
 
+CFLAGS+= -DDEBUG
 all: bspinprod.o bspmv.o vecio.o matsort.o paullib.o vecalloc-seq.o bspedupack.o
 
 matsort.o: matsort.h matsort.c
