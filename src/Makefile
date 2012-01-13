@@ -1,4 +1,4 @@
-include huygens.mk
+include cc.mk
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
 # the objects required to build the final executable CG

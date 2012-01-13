@@ -1,4 +1,4 @@
-include ../huygens.mk
+include ../cc.mk
 LFLAGS= -lm -lbsponmpi
 
 all: bspinprod.o bspmv.o vecio.o matsort.o paullib.o vecalloc-seq.o bspedupack.o
