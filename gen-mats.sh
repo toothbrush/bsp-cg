@@ -1,5 +1,8 @@
 #!/bin/bash
 
+./time-and-log.sh ./src/genmat 5000  150 0.01 &
+./time-and-log.sh ./src/genmat 5000  15 0.001 &
+./time-and-log.sh ./src/genmat 5000  75  0.005 &
 ./time-and-log.sh ./src/genmat 10000 300 0.01 &
 ./time-and-log.sh ./src/genmat 10000 30 0.001 &
 ./time-and-log.sh ./src/genmat 10000 150 0.005 &
