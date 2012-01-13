@@ -79,6 +79,7 @@ void bspcg(){
     HERE("Loaded distribution vec v.\n");
     for(i=0; i<nv; i++){
         iglob= vindex[i];
+        HERE("original input vec %d = %lf\n", iglob, v[i]);
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
@@ -95,7 +96,6 @@ void bspcg(){
     bsp_sync();
     time0= bsp_time();
 
-    assert(ncols==nrows);
     // alloc metadata arrays
     srcprocu  = vecalloci(ncols);
     srcindu   = vecalloci(ncols);
