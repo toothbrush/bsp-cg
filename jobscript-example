@@ -1,0 +1,15 @@
+# @ node = 1
+#
+# @ tasks_per_node = 4
+# @ notification = never
+# @ input = /dev/null
+# @ output = out-bspbench4.$(jobid)
+# @ error = err-bspbench4.$(jobid)
+# @ wall_clock_limit = 00:10:00
+# @ job_type = parallel
+#
+# @ queue
+#
+# @ node_usage = shared
+cd $HOME/Students10/pdwalt/bsp-cg/
+./bspbench 4
