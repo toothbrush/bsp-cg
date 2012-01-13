@@ -4,6 +4,8 @@
 #include "bspedupack.h"
 #include "bspfuncs.h"
 #include "matsort.h"
+#include "paullib.h"
+#include <time.h>
 
 // This is from BSPedupack
 
@@ -64,6 +66,14 @@ void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz,
     if (s==0){
         /* Open the matrix file and read the header */
         fp=fopen(filename,"r");
+
+        // get rid of first line, the Mondriaan header:
+        char sillyChar;
+        sillyChar = 0;
+        while (sillyChar != '\n'){
+            sillyChar = fgetc(fp);
+        }
+
 
         /* A is an mA by nA matrix with nzA nonzeros
            distributed over pA processors. */
@@ -324,6 +334,9 @@ void bspinputvec(int p, int s, const char *filename,
             Nv[q]= 0;
     }
 
+    // seed the random generator.
+    srandom((unsigned)time(NULL));
+
     /* block size for vector read */
     b= (n%p==0 ? n/p : n/p+1);
     for (q=0; q<p; q++){
@@ -333,7 +346,10 @@ void bspinputvec(int p, int s, const char *filename,
                temporary location. This is done n/p components
                at a time to save memory  */
             for(k=q*b; k<(q+1)*b && k<n; k++){
-                fscanf(fp,"%d %d %lf\n", &i, &proc, &allVals[k]); // also save value
+                // we're going to generate a random value here.
+                //fscanf(fp,"%d %d %lf\n", &i, &proc, &allVals[k]); // also save value
+                fscanf(fp,"%d %d\n", &i, &proc); // also save value
+                allVals[k]=ran();
                 /* Convert index and processor number to ranges
                    0..n-1 and 0..p-1, assuming they were
                    1..n and 1..p */

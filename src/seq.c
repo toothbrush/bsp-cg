@@ -163,6 +163,8 @@ void cg_test() {
 
     double rho, rho_old, beta, alpha, gamma;
 
+    rho_old = 0; //kill warning
+
     rho = ip(r,r);
 
     double *p; p = malloc(N*sizeof(double));

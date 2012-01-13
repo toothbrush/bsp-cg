@@ -6,12 +6,15 @@
 #include <time.h>
 #include "genmat.h"
 #include "libs/paulbool.h"
+#include "libs/paullib.h"
 
 int N;
+double sparsity;
+
+#define SZCHAR (sizeof(char))
 
 int main (int argc, char** argv) {
 
-    double sparsity;
     // aim for a nonzero density given by sparsity:
     sparsity = 0.2; // nz = sparsity*100% of the size of the matrix
 
@@ -80,7 +83,9 @@ int main (int argc, char** argv) {
     x=0;y=0;
     while(x<N && y<N) { //don't escape matrix bounds.
 
-        fprintf(stderr,"progress: %lf%%\n", 100*nz_generated/(double)(nz/2.0));
+        if (nz_generated % 1000000 == 0) {
+            fprintf(stderr,"progress: %f%%\n", (double)nz_generated/(double)(nz/2.0)*100.0);
+        }
         if(x==y) {
             //diagonal, so always generate.
 
@@ -172,7 +177,7 @@ int main (int argc, char** argv) {
         exit(44);
     }
 
-    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, N, diag_done);
+    addDiagonal(mu, diag_i, diag_j, diag_val, nz_generated, newsize, diag_done);
     nz_generated=newsize;
 #ifdef DEBUG
     for(i=0;i<newsize;i++) {
@@ -194,21 +199,20 @@ int main (int argc, char** argv) {
     int *new_j;
     double *new_v;
 
-    fprintf(stderr, "newsize = %d\n", newsize);
-    fprintf(stderr, "%p\n", diag_j);
     new_i = realloc(diag_i  ,SZINT*newsize);
     new_j = realloc(diag_j  ,SZINT*newsize);
-    exit(0);
     new_v = realloc(diag_val,SZDBL*newsize);
-    fprintf(stderr, "new i and j = %p, %p, %p\n", new_i, new_j, new_v);
 
-    if(diag_i == NULL ||
-            diag_j == NULL ||
-            diag_val == NULL)
+    if(new_i == NULL ||
+            new_i == NULL ||
+            new_v == NULL)
     {
         printf("out of memory (2)!");
         exit(44);
     }
+    diag_i = new_i;
+    diag_j = new_j;
+    diag_val = new_v;
     addTranspose(newsize,diag_i,diag_j,diag_val,
                               nz_generated);
 
@@ -229,13 +233,14 @@ int main (int argc, char** argv) {
     for(i=0;i<N;i++)
         vec[i]=ran();
 
-    fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf\n", newsize, newsize/((double)N*N));
+    fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf (desired=%lf)\n", newsize, newsize/((double)N*N), sparsity);
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
-    //outputMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    outputMondriaanMatrix(newsize, diag_i, diag_j, diag_val, vec);
     //outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
+    free(diag_done);
     free(vec);
     free(diag_i);
     free(diag_j);
@@ -244,7 +249,7 @@ int main (int argc, char** argv) {
     return 0;
 }
 
-void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int diags_needed, bool* diags_done) {
+void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int newsize, bool* diags_done) {
 
     int c;
     int pos = nz_generated;
@@ -255,8 +260,6 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int dia
             j[pos] = c;
             v[pos] = ran()*2.0-1.0;
 
-            fprintf(stderr, "adding diag %d to array pos %d\n", c, pos);
-
             pos++;
 
 
@@ -265,7 +268,7 @@ void addDiagonal(double mu, int* i, int* j, double* v, int nz_generated, int dia
     }
     // now add mu to each diagonal value.
 
-    for(c=0;c<nz_generated+diags_needed; c++) {
+    for(c=0;c<newsize; c++) {
 
         if(i[c]==j[c]) {
             v[c] += mu;
@@ -357,52 +360,54 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
 
 }
 
-/*
- * return a random double in the interval [0,1]
- */
-double ran() {
-
-    return ((double)random()/(double)RAND_MAX);
-
-}
-
 void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in Mathematica format
+    FILE *fp;
 
-    // Mathematica "header"
+    char* filename = malloc(SZCHAR*1024);
 
-    printf("somemat = SparseArray[ { \n");
+    sprintf(filename, "mat-check-%d-%f.nb", N, sparsity);
+    fprintf(stderr,"%s\n", filename);
+    fp = fopen(filename, "w");
+
+    fprintf(fp,"Print[\"reading matrix...\"]\n");
+    fprintf(fp,"somemat = SparseArray[ { \n");
     // the value lines: i j value:
     int c;
     for(c=0;c<nz-1;c++) {
 
-        printf("{%d, %d} -> %lf,\n", i[c]+1, j[c]+1, v[c]); // Mathematica expects 1-based coordinates.
+        fprintf(fp,"{%d, %d} -> %lf,\n", i[c]+1, j[c]+1, v[c]); // Mathematica expects 1-based coordinates.
 
     }
-    printf("{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mathematica expects 1-based coordinates.
+    fprintf(fp,"{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mathematica expects 1-based coordinates.
 
-    printf("} ] ;\n");
-    printf("(* somemat // MatrixForm *)\n");
+    fprintf(fp,"} ] ;\n");
+    fprintf(fp,"(* somemat // MatrixForm *)\n");
 
-    printf("\n\n\n");
+    fprintf(fp,"\n\n\n");
 
-    printf("(* ======= vector v follows ====== *)\n");
+    fprintf(fp,"(* ======= vector v follows ====== *)\n");
 
 
-    printf("vec = {\n");
+    fprintf(fp,"Print[\"reading vector...\"]\n");
+    fprintf(fp,"vec = {\n");
     // N vector entries, one proc.
     for(c=0;c<N-1;c++) {
         // each line is a value, in order of the vector indices.
-        printf("%lf,\n", vec[c]);
+        fprintf(fp,"%lf,\n", vec[c]);
     }
     // last line without comma.
-    printf("%lf\n};\n(* vec // MatrixForm *)\n", vec[N-1]);
+    fprintf(fp,"%lf\n};\n(* vec // MatrixForm *)\n", vec[N-1]);
 
     // and finally, for the paranoid:
-    printf("\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
-    printf("correctAnswer = LinearSolve[somemat,vec];\n");
-    printf("(* correctAnswer // MatrixForm *)\n");
+    fprintf(fp,"Print[\"checking PosDef then Symm...\"]\n");
+    fprintf(fp,"\n\nPositiveDefiniteMatrixQ[somemat]\n\nSymmetricMatrixQ[somemat]\n");
+    fprintf(fp,"(* correctAnswer = LinearSolve[somemat,vec]; *)\n");
+    fprintf(fp,"(* correctAnswer // MatrixForm *)\n");
+
+    free(filename);
+    fclose(fp);
 
 }
 void outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec) {
@@ -412,55 +417,84 @@ void outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // no header.
     //size line: m n nz
-    printf("%d %d %d %d\n", N, N, nz, 1); // one processor, i.e. not distributed
+    FILE* fp;
+
+    char* filename = malloc(1024*SZCHAR);
+
+    sprintf(filename, "mat-%d-%f.mtx", N, sparsity);
+    fprintf(stderr, "%s\n", filename);
+
+    fp = fopen(filename, "w");
+    fprintf(fp, "%d %d %d %d\n", N, N, nz, 1); // one processor, i.e. not distributed
     // begin and end bounds of proc 1 are 0 and nz
-    printf("0\n%d\n", nz);
+    fprintf(fp,"0\n%d\n", nz);
 
     // next the value lines: i j value:
     int c;
     for(c=0;c<nz;c++) {
 
-        printf("%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // bsp-cg expects 1-based coordinates.
+        fprintf(fp,"%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // bsp-cg expects 1-based coordinates.
 
     }
+    fclose(fp);
 
     fprintf(stderr, "======= vector v follows ======\n");
 
+    sprintf(filename, "mat-%d.v", N);
+    fprintf(stderr,"%s\n", filename);
+
+    fp = fopen(filename, "w");
 
     // N vector entries, one proc.
-    printf("%d %d\n", N, 1);
+    fprintf(fp,"%d %d\n", N, 1);
     for(c=0;c<N;c++) {
         // each line is
         //   coordinate,processor,value
-        printf("%d %d %lf\n", c+1, 1, vec[c]);
+        // for now, without value:
+        fprintf(fp,"%d %d\n", c+1, 1);
+        //fprintf(fp,"%d %d %lf\n", c+1, 1, vec[c]);
     }
 
+    fclose(fp);
+    free(filename);
 
 }
-void outputMatrix(int nz, int*i, int*j, double*v, double*vec) {
+void outputMondriaanMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in EMM format.
 
+    FILE* fp;
+
+    char* filename = malloc(SZCHAR*1024);
+    sprintf(filename,"linsys-%d-%f.emm", N, sparsity);
+
+    fprintf(stderr,"%s\n", filename);
+
+    fp = fopen(filename,"w");
     //header:
-    printf("%%%%Extended-MatrixMarket matrix coordinate double general original\n");
+    fprintf(fp, "%%%%Extended-MatrixMarket matrix coordinate double general original\n");
     //size line: m n nz
-    printf("%d %d %d\n", N, N, nz);
+    fprintf(fp, "%d %d %d\n", N, N, nz);
 
     // next the value lines: i j v,
     int c;
     for(c=0;c<nz;c++) {
 
-        printf("%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
+        fprintf(fp, "%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
 
     }
 
     // ...and now for the vector-to-be-solved-for:
-    printf("%%%%b vector double general array original\n");
+    fprintf(fp, "%%%%b vector double general array original\n");
     //size line:
-    printf("%d\n", N);
+    fprintf(fp, "%d\n", N);
     for(c=0;c<N;c++) {
-        printf("%lf\n", vec[c]);
+        fprintf(fp, "%lf\n", vec[c]);
     }
+
+
+    fclose(fp);
+    free(filename);
 
 
 }

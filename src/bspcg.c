@@ -79,6 +79,7 @@ void bspcg(){
     HERE("Loaded distribution vec v.\n");
     for(i=0; i<nv; i++){
         iglob= vindex[i];
+        HERE("original input vec %d = %lf\n", iglob, v[i]);
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
@@ -95,7 +96,6 @@ void bspcg(){
     bsp_sync();
     time0= bsp_time();
 
-    assert(ncols==nrows);
     // alloc metadata arrays
     srcprocu  = vecalloci(ncols);
     srcindu   = vecalloci(ncols);
@@ -188,6 +188,8 @@ void bspcg(){
 
     double* answer = vecallocd(n);
     bsp_push_reg(answer,n*SZDBL);
+    int* nz_per_proc = vecalloci(P);
+    bsp_push_reg(nz_per_proc,P*SZINT);
 
     bsp_sync();
 
@@ -195,12 +197,19 @@ void bspcg(){
         iglob=uindex[i];
         bsp_put(0, &u[i], answer, iglob*SZDBL, SZDBL);
     }
+    bsp_put(0, &nz, nz_per_proc, s*SZINT, SZINT);
     bsp_sync();
 
     if(s==0) {
 
+        int total_nz = 0;
+        for(i=0; i<p;i++)
+            total_nz += nz_per_proc[i];
+
         printf("========= Solution =========\n");
         printf("Final error = %Le\n\n", rho_old);
+        printf("csv_answer:\tP\tN\tnz\ttime\titers\n");
+        printf("csv_answer:\t%d\t%d\t%d\t%lf\t%d\n",P,n,total_nz,(time2-time1),k-1);
 
 #ifdef DEBUG
         for(i=0; i<n; i++) {
@@ -210,8 +219,9 @@ void bspcg(){
     }
 
     bsp_pop_reg(answer);
+    bsp_pop_reg(nz_per_proc);
 
-    vecfreed(answer);
+    vecfreed(answer);   vecfreei(nz_per_proc);
     vecfreed(w);        vecfreed(pvec);
     vecfreed(r);        vecfreed(pold);
 

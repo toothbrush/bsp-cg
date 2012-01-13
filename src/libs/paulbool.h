@@ -1,3 +1,5 @@
+#ifndef __PAULBOOL
+#define __PAULBOOL
 
 #ifndef __PBOOL
 #define __PBOOL
@@ -7,3 +9,4 @@
 	typedef int bool;
 #endif
 
+#endif

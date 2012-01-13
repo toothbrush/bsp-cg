@@ -9,3 +9,5 @@ void addvec(int n, double* dest, double* a, double*b);
 void axpy(int nv, double a, double* x, double* y,double* result);
 void zero(int nv, double* v);
 void one(int nv, double* v);
+
+double ran();

@@ -12,6 +12,16 @@
 #include "paullib.h"
 
 /*
+ * return a random double in the interval [0,1]
+ */
+double ran() {
+
+    return ((double)random()/(double)RAND_MAX);
+
+}
+
+
+/*
  * useful function to stat a file
  */
 bool file_exists(const char * filename)
