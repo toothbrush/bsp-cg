@@ -67,6 +67,15 @@ void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz,
         /* Open the matrix file and read the header */
         fp=fopen(filename,"r");
 
+        // get rid of first line, the Mondriaan header:
+        char sillyChar;
+        sillyChar = 0;
+        while (sillyChar != '\n'){
+            sillyChar = fgetc(fp);
+            printf("%c", sillyChar);
+        }
+
+
         /* A is an mA by nA matrix with nzA nonzeros
            distributed over pA processors. */
         fscanf(fp,"%d %d %d %d\n", &mA, &nA, &nzA, &pA);
