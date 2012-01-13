@@ -3,3 +3,4 @@ src/cg
 cg2
 src/seq
 mats
+*.job
