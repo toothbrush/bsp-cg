@@ -236,9 +236,9 @@ int main (int argc, char** argv) {
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf (desired=%lf)\n", newsize, newsize/((double)N*N), sparsity);
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     outputMondriaanMatrix(newsize, diag_i, diag_j, diag_val, vec);
-    outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
+    //outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
     free(diag_done);
     free(vec);
