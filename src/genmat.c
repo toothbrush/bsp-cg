@@ -6,6 +6,7 @@
 #include <time.h>
 #include "genmat.h"
 #include "libs/paulbool.h"
+#include "libs/paullib.h"
 
 int N;
 double sparsity;
@@ -359,15 +360,6 @@ void checkStrictDiagonallyDominant(int* i, int* j, double* v, int nz)
 
 }
 
-/*
- * return a random double in the interval [0,1]
- */
-double ran() {
-
-    return ((double)random()/(double)RAND_MAX);
-
-}
-
 void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in Mathematica format
@@ -458,7 +450,9 @@ void outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec) {
     for(c=0;c<N;c++) {
         // each line is
         //   coordinate,processor,value
-        fprintf(fp,"%d %d %lf\n", c+1, 1, vec[c]);
+        // for now, without value:
+        fprintf(fp,"%d %d\n", c+1, 1);
+        //fprintf(fp,"%d %d %lf\n", c+1, 1, vec[c]);
     }
 
     fclose(fp);

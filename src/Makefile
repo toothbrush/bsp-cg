@@ -6,7 +6,7 @@ LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 # the objects required to build the final executable CG
 OBJS=bspcg.o
 OBJS_SEQ=seq.o
-OBJS_GEN=genmat.o libs/vecalloc-seq.o
+OBJS_GEN=genmat.o libs/vecalloc-seq.o libs/paullib.o
 LIBOBJS=libs/bspmv.o libs/bspinprod.o libs/vecio.o libs/matsort.o libs/paullib.o libs/bspedupack.o
 BINS=cg genmat seq
 
