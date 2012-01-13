@@ -72,7 +72,6 @@ void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz,
         sillyChar = 0;
         while (sillyChar != '\n'){
             sillyChar = fgetc(fp);
-            printf("%c", sillyChar);
         }
 
 
