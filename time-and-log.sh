@@ -8,4 +8,4 @@ LOGNAME="$LOGNAME-$$"
 
 exec 1> $LOGNAME.out.log 2>$LOGNAME.err.log
 echo $CMD
-sh -c "$CMD"
+sh -c "time $CMD"
