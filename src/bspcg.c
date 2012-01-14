@@ -9,7 +9,7 @@
 #include "libs/debug.h"
 
 #define EPS (10E-12)
-#define KMAX (1000)
+#define KMAX (10)
 
 /*
  * This program takes as input:
@@ -71,7 +71,6 @@ void bspcg(){
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
-    assert(nrows == ncols); // since the matrix was square to start with.
     vecfreei(ja);
 
     /* Read vector distributions */
@@ -79,7 +78,7 @@ void bspcg(){
     HERE("Loaded distribution vec u (nu=%d).\n",nu);
     for(i=0; i<nu; i++){
         iglob= uindex[i];
-      //  HERE("original input vec %d = %lf\n", iglob, u[i]);
+        HERE("original input vec %d = %lf\n", iglob, u[i]);
     }
 
     bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
@@ -114,16 +113,16 @@ void bspcg(){
     bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
                srcprocv,srcindv,destprocu,destindu);
 
-    bsp_abort("normal...");
-
     r = vecallocd(nu);
     // corresponds to:
     // r := b - Ax,
     // but our guess for x = 0;
     for(i=0; i< nu; i++) {
         r[i] = u[i];
+        printf("r[%d] = %lf\n", i, r[i]);
     }
 
+    printf("r's address here is %p\n", r);
     long double rho = bspip(p,s,nu,nu,r,r,destprocu,destindu);
     long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
@@ -132,6 +131,7 @@ void bspcg(){
     double *pvec = vecallocd(nv);
     double *w    = vecallocd(nu);
 
+    printf("rho (r.r) turned out to be = %Lf\n", rho);
     while ( k < KMAX &&
             rho > EPS * EPS * bspip(p,s,nv,nv,v,v,srcprocv,srcindv)) {
         if ( k == 0 ) {
@@ -150,8 +150,8 @@ void bspcg(){
 
         alpha = rho/gamma;
 
-        local_axpy(nu,alpha,pvec,u,   // alpha*p + u
-                                 u);  // into u
+        local_axpy(nv,alpha,pvec,v,   // alpha*p + x
+                                 v);  // into x
 
         local_axpy(nu,-alpha,w,r,
                                r);
