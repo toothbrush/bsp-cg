@@ -48,28 +48,6 @@ void negate(int n, double* v)
 }
 
 /*
- * copy distributed vec v into u
- */
-void copyvec(
-        int nv, int nu,
-        double* v, double* u,
-        int* procu, int* indu)
-{
-    int i;
-
-    bsp_push_reg(u, nu*SZDBL);
-    bsp_sync();
-    for(i=0;i<nv;i++) {
-
-        bsp_put(procu[i], &v[i], u, indu[i]*SZDBL, SZDBL);
-
-    }
-    bsp_sync();
-    bsp_pop_reg(u);
-
-}
-
-/*
  * make all vector components 0
  */
 void zero (int nv, double * a)
@@ -99,17 +77,6 @@ void scalevec(int n, double factor, double*vec)
     int i;
     for(i = 0; i<n; i++)
         vec[i] *= factor;
-}
-
-/*
- * Add a and b and place result in dest. Assumes dest
- * is malloc'd already.
- */
-void addvec(int n, double* dest, double* a, double*b)
-{
-    int i;
-    for(i = 0; i<n; i++)
-        dest[i] = a[i] + b[i];
 }
 
 /*
