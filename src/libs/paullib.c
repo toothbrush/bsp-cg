@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "paullib.h"
+#include "bspedupack.h"
 
 /*
  * return a random double in the interval [0,1]
@@ -47,15 +48,24 @@ void negate(int n, double* v)
 }
 
 /*
- * copy vec src into dest
+ * copy distributed vec v into u
  */
-void copyvec(int n, double* src,
-                    double* dest)
+void copyvec(
+        int nv, int nu,
+        double* v, double* u,
+        int* procu, int* indu)
 {
     int i;
-    for(i = 0; i<n; i++) {
-        dest[i] = src[i];
+
+    bsp_push_reg(u, nu*SZDBL);
+    bsp_sync();
+    for(i=0;i<nv;i++) {
+
+        bsp_put(procu[i], &v[i], u, indu[i]*SZDBL, SZDBL);
+
     }
+    bsp_sync();
+    bsp_pop_reg(u);
 
 }
 
@@ -72,10 +82,10 @@ void zero (int nv, double * a)
 /*
  * Calculate ax+y.
  */
-void axpy (int nv, double a, double* x, double* y,double* result) {
+void local_axpy (int n, double a, double* x, double* y,double* result) {
 
     int i;
-    for (i = 0; i< nv; i++) {
+    for (i = 0; i< n; i++) {
         result[i] = a * x[i] + y[i];
     }
 
