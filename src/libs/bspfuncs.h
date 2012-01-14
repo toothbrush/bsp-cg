@@ -10,6 +10,7 @@ void bspmv_init(int p, int s, int n, int nrows, int ncols,
                 int *vindex, int *uindex, int *srcprocv, int *srcindv,
                 int *destprocu, int *destindu);
 
-double bspip(int p, int s, int n, double *x, double *y);
+double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
+        int *procv2, int *indv2);
 
 void bspinprod();

@@ -1,39 +1,50 @@
 #include "bspfuncs.h"
 #include "bspedupack.h"
 
-// This is from BSPedupack
+// This is my own version, bspip from BSPedupack
+// cannot handle v1 and v2 having arbitrary distributions.
 
-/*  This program computes the sum of the first n squares, for n>=0,
-        sum = 1*1 + 2*2 + ... + n*n
-    by computing the inner product of x=(1,2,...,n)^T and itself.
-    The output should equal n*(n+1)*(2n+1)/6.
-    The distribution of x is cyclic.
-*/
-
-double bspip(int p, int s, int n, double *x, double *y){
+double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
+        int *procv2, int *indv2)
+{
     /* Compute inner product of vectors x and y of length n>=0 */
+    // here v1 is the local vector and v2 is the remote vector.
 
-    double inprod, *Inprod, alpha;
-    int i, t;
+    double *v2_locals = vecallocd(nv1);
 
-    Inprod= vecallocd(p);
-    bsp_push_reg(Inprod,p*SZDBL);
-    bsp_sync();
+    int i;
+    bsp_push_reg(v2, nv2*SZDBL);
 
-    inprod= 0.0;
-    for (i=0; i<nloc(p,s,n); i++){
-        inprod += x[i]*y[i];
+    for(i=0; i<nv1; i++) {
+        bsp_get(procv2[i], v2, indv2[i]*SZDBL, &v2_locals[i], SZDBL);
+
     }
-    for (t=0; t<p; t++){
-        bsp_put(t,&inprod,Inprod,s*SZDBL,SZDBL);
-    }
-    bsp_sync();
+    bsp_pop_reg(v2);
 
-    alpha= 0.0;
-    for (t=0; t<p; t++){
-        alpha += Inprod[t];
+    double myip=0.0;
+
+    for(i=0;i<nv1;i++) {
+        myip += v1[i]*v2_locals[i];
     }
-    bsp_pop_reg(Inprod); vecfreed(Inprod);
+
+    double* Inprod = vecallocd(p);
+    bsp_push_reg(Inprod, p*SZDBL);
+
+    for(i=0;i<p;i++) {
+
+        bsp_put(p, &myip, Inprod, s*SZDBL, SZDBL);
+
+    }
+
+
+    bsp_pop_reg(Inprod);
+
+    double alpha = 0.0;
+    for(i=0;i<p;i++)
+        alpha += Inprod[i];
+
+    free(Inprod);
+    free(v2_locals);
 
     return alpha;
 
