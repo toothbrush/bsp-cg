@@ -138,9 +138,8 @@ void bspcg(){
             copyvec(nu, nv,r,pvec, srcprocv, srcindv);
         } else {
             beta = rho/rho_old;
-            // TODO:
-            axpy(nv,beta,pvec,r,     // beta*p + r
-                              pvec); // into p
+            scalevec(nv, beta, pvec);
+            addvec(nv,pvec, nu, r, destprocu, destindu);
             if(s==0)
                 printf("[Iteration %02d] rho  = %Le\n", k, rho);
         }
