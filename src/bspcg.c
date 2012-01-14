@@ -241,15 +241,15 @@ int main(int argc, char **argv){
     bsp_init(bspcg, argc, argv);
     P = bsp_nprocs();
 
-    if(argc != 3){
+    if(argc != 4){
         fprintf(stderr, "Usage:\n");
-        fprintf(stderr, "\t%s [mtx-dist] [v-vec]\n\n", argv[0]);
+        fprintf(stderr, "\t%s [mtx-dist] [u-dist] [v-dist]\n\n", argv[0]);
         exit(1);
     }
 
     strcpy(matrixfile, argv[1]);
-    strcpy(vfilename, argv[2]);
     strcpy(ufilename, argv[2]);
+    strcpy(vfilename, argv[3]);
 
     bspcg();
     exit(0);
