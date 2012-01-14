@@ -31,8 +31,7 @@ char vfilename[STRLEN], ufilename[STRLEN], matrixfile[STRLEN];
 void bspcg(){
 
     int s, p, n, nz, i, iglob, nrows, ncols, nv, nu,
-        *ia, *ja, *rowindex, *colindex, *vindex, *uindex,
-        *srcprocu, *srcindu, *destprocv, *destindv;
+        *ia, *ja, *rowindex, *colindex, *vindex, *uindex;
     double *a, *v, *u, *r, time0, time1, time2;
 
     bsp_begin(P);
@@ -72,23 +71,20 @@ void bspcg(){
     /* Convert data structure to incremental compressed row storage */
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
-    assert(nrows == ncols);
+    assert(nrows == ncols); // since the matrix was square to start with.
     vecfreei(ja);
 
     /* Read vector distributions */
-    bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
-    HERE("Loaded distribution vec v (nv=%d).\n",nv);
-    for(i=0; i<nv; i++){
-        iglob= vindex[i];
-      //  HERE("original input vec %d = %lf\n", iglob, v[i]);
-    }
-
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
     HERE("Loaded distribution vec u (nu=%d).\n",nu);
     for(i=0; i<nu; i++){
         iglob= uindex[i];
-      //  HERE("original input vec %d = %lf\n", iglob, v[i]);
+      //  HERE("original input vec %d = %lf\n", iglob, u[i]);
     }
+
+    bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
+    HERE("Loaded distribution vec v (nv=%d). set to zero.\n",nv);
+    zero(nv,v);
 
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
     if(s==0)
@@ -101,10 +97,12 @@ void bspcg(){
     time0= bsp_time();
 
     // alloc metadata arrays
-    srcprocu  = vecalloci(ncols);
-    srcindu   = vecalloci(ncols);
-    destprocv = vecalloci(nrows);
-    destindv  = vecalloci(nrows);
+    int *srcprocv, *srcindv, *destprocu, *destindu;
+
+    srcprocv  = vecalloci(ncols);
+    srcindv   = vecalloci(ncols);
+    destprocu = vecalloci(nrows);
+    destindu  = vecalloci(nrows);
 
     // do the heavy lifting.
     bsp_sync();
@@ -113,52 +111,54 @@ void bspcg(){
     int k;
 
     k = 0; // iteration number
-    r = vecallocd(nu);
-    zero(nu,r);
-    bspmv_init(p,s,n,nrows,ncols,nu,nv,rowindex,colindex,uindex,vindex,
-               srcprocu,srcindu,destprocv,destindv);
+    bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
+               srcprocv,srcindv,destprocu,destindu);
 
     bsp_abort("normal...");
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
-            destprocv,destindv, nu, nv, u, r);
-    negate(nv, r);
-    axpy(nv, 1.0, v, r, r);
 
-    long double rho = bspip(p,s,n,r,r);
+    r = vecallocd(nu);
+    // corresponds to:
+    // r := b - Ax,
+    // but our guess for x = 0;
+    for(i=0; i< nu; i++) {
+        r[i] = u[i];
+    }
+
+    long double rho = bspip(p,s,nu,nu,r,r,destprocu,destindu);
     long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
     bsp_sync();
 
-    double *pvec = vecallocd(nu);
-    double *pold = vecallocd(nu);
+    double *pvec = vecallocd(nv);
     double *w    = vecallocd(nu);
 
     while ( k < KMAX &&
-            rho > EPS * EPS * bspip(p,s,n,v,v)) {
+            rho > EPS * EPS * bspip(p,s,nv,nv,v,v,srcprocv,srcindv)) {
         if ( k == 0 ) {
-            copyvec(nv,r,pvec);
+            copyvec(nu, nv,r,pvec, srcprocv, srcindv);
         } else {
             beta = rho/rho_old;
+            // TODO:
             axpy(nv,beta,pvec,r,     // beta*p + r
                               pvec); // into p
             if(s==0)
                 printf("[Iteration %02d] rho  = %Le\n", k, rho);
         }
-        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
-              destprocv,destindv,nu,nv,pvec,w);
+        bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
+              destprocu,destindu,nv,nu,pvec,w);
 
-        gamma = bspip(p,s,n,pvec,w);
+        gamma = bspip(p,s,nv,nu,pvec,w,destprocu,destindu);
 
         alpha = rho/gamma;
 
-        axpy(nu,alpha,pvec,u,   // alpha*p + u
-                           u);  // into u
+        local_axpy(nu,alpha,pvec,u,   // alpha*p + u
+                                 u);  // into u
 
-        axpy(nv,-alpha,w,r,
-                         r);
+        local_axpy(nu,-alpha,w,r,
+                               r);
 
         rho_old = rho;
-        rho     = bspip(p,s,n,r,r);
+        rho = bspip(p,s,nu,nu,r,r,destprocu,destindu);
 
         k++;
 
@@ -179,16 +179,16 @@ void bspcg(){
         printf("The computed solution is:\n");
     }
 
-    for(i=0; i<nu; i++){
-        iglob=uindex[i];
-        HERE("FINAL ANSWER *** proc=%d u[%d]=%lf \n",s,iglob,u[i]);
+    for(i=0; i<nv; i++){
+        iglob=vindex[i];
+        HERE("FINAL ANSWER *** proc=%d v[%d]=%lf \n",s,iglob,v[i]);
     }
     HERE("...which gives, filled in (should equal v):\n");
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
-          destprocv,destindv,nu,nv,u,w);
+    bspmv(p,s,n,nz,nrows,ncols,a,ia,destprocu,destindu,
+          srcprocv,srcindv,nv,nu,v,w);
     for(i=0; i<nu; i++){
         iglob=uindex[i];
-        HERE("CHECKSUM     *** proc=%d A.u[%d]=%lf \n",s,iglob,w[i]);
+        HERE("CHECKSUM     *** proc=%d A.v[%d]=%lf \n",s,iglob,w[i]);
     }
 
     double* answer = vecallocd(n);
@@ -198,9 +198,9 @@ void bspcg(){
 
     bsp_sync();
 
-    for(i=0; i<nu; i++){
-        iglob=uindex[i];
-        bsp_put(0, &u[i], answer, iglob*SZDBL, SZDBL);
+    for(i=0; i<nv; i++){
+        iglob=vindex[i];
+        bsp_put(0, &v[i], answer, iglob*SZDBL, SZDBL);
     }
     bsp_put(0, &nz, nz_per_proc, s*SZINT, SZINT);
     bsp_sync();
@@ -228,10 +228,10 @@ void bspcg(){
 
     vecfreed(answer);   vecfreei(nz_per_proc);
     vecfreed(w);        vecfreed(pvec);
-    vecfreed(r);        vecfreed(pold);
+    vecfreed(r);
 
-    vecfreei(destindv); vecfreei(destprocv);
-    vecfreei(srcindu);  vecfreei(srcprocu);
+    vecfreei(destindu); vecfreei(destprocu);
+    vecfreei(srcindv);  vecfreei(srcprocv);
     vecfreed(u);        vecfreed(v);
     vecfreei(uindex);   vecfreei(vindex);
     vecfreei(rowindex); vecfreei(colindex);
