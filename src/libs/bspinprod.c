@@ -15,6 +15,7 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
     int i;
     bsp_push_reg(v2, nv2*SZDBL);
 
+    bsp_sync();
     for(i=0; i<nv1; i++) {
         bsp_get(procv2[i], v2, indv2[i]*SZDBL, &v2_locals[i], SZDBL);
 
@@ -29,6 +30,7 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
 
     double* Inprod = vecallocd(p);
     bsp_push_reg(Inprod, p*SZDBL);
+    bsp_sync();
 
     for(i=0;i<p;i++) {
 
