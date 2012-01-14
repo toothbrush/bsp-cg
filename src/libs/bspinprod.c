@@ -13,13 +13,18 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
     double *v2_locals = vecallocd(nv1);
 
     int i;
+    /*printf("registering address %p\n", v2);*/
     bsp_push_reg(v2, nv2*SZDBL);
 
     bsp_sync();
     for(i=0; i<nv1; i++) {
+        /*printf("bsp_get(procv2[i],\tv2,\tindv2[i]*SZDBL,\t&v2_locals[i],\tSZDBL);\n");*/
+        /*printf("bsp_get(%d,\t\tv2,\t%d*SZDBL,\t&v2_locals[%d],\tSZDBL);\n",procv2[i],indv2[i],i);*/
         bsp_get(procv2[i], v2, indv2[i]*SZDBL, &v2_locals[i], SZDBL);
 
+        //printf("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
     }
+    bsp_sync();
     bsp_pop_reg(v2);
 
     double myip=0.0;
@@ -34,10 +39,13 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
 
     for(i=0;i<p;i++) {
 
-        bsp_put(p, &myip, Inprod, s*SZDBL, SZDBL);
+        /*printf("bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);\n");*/
+        /*printf("bsp_put(%d, &myip, Inprod, %d*SZDBL, SZDBL);\n",i,s);*/
+        bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);
 
     }
 
+    bsp_sync();
 
     bsp_pop_reg(Inprod);
 
@@ -81,15 +89,21 @@ void copyvec(
 void addvec(int nv, double *v, int nr, double *remote,
         int *procr, int *indr) {
 
-    double tmp;
+    double *tmp = vecallocd(nv);
     bsp_push_reg(remote,nr*SZDBL);
     bsp_sync();
 
     int i;
     for(i=0;i<nv;i++) {
-        bsp_get(procr[i], remote, indr[i]*SZDBL, &tmp, SZDBL);
-        v[i] += tmp;
+        bsp_get(procr[i], remote, indr[i]*SZDBL, &tmp[i], SZDBL);
     }
     bsp_pop_reg(remote);
+    bsp_sync();
 
+    for(i=0;i<nv;i++) {
+        v[i] += tmp[i];
+
+    }
+
+    free(tmp);
 }
