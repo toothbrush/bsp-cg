@@ -9,7 +9,7 @@
 #include "libs/debug.h"
 
 #define EPS (10E-12)
-#define KMAX (10)
+#define KMAX (15)
 
 /*
  * This program takes as input:
@@ -85,6 +85,7 @@ void bspcg(){
     HERE("Loaded distribution vec v (nv=%d). set to zero.\n",nv);
     zero(nv,v);
 
+    assert(nv!=nu); // we want interesting testcases.
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
     if(s==0)
         printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
@@ -119,10 +120,9 @@ void bspcg(){
     // but our guess for x = 0;
     for(i=0; i< nu; i++) {
         r[i] = u[i];
-        printf("r[%d] = %lf\n", i, r[i]);
+        printf("r[%d] = %lf\n", uindex[i], r[i]);
     }
 
-    printf("r's address here is %p\n", r);
     long double rho = bspip(p,s,nu,nu,r,r,destprocu,destindu);
     long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
@@ -135,7 +135,14 @@ void bspcg(){
     while ( k < KMAX &&
             rho > EPS * EPS * bspip(p,s,nv,nv,v,v,srcprocv,srcindv)) {
         if ( k == 0 ) {
-            copyvec(nu, nv,r,pvec, srcprocv, srcindv);
+            // do p := r
+            copyvec(nu, nv,r,pvec, destprocu, destindu);
+            for(i=0;i<nv;i++) {
+                printf("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);
+                bsp_sync();
+
+            }
+            bsp_abort("normal\n");
         } else {
             beta = rho/rho_old;
             scalevec(nv, beta, pvec);
@@ -174,7 +181,7 @@ void bspcg(){
     if (s==0){
         HERE("End of matrix-vector multiplications.\n");
         HERE("Initialization took only %.6lf seconds.\n", time1-time0);
-        printf("%d CG iterations took only %.6lf seconds (KMAX = %d).\n", k-1, (time2-time1), KMAX);
+        printf("%d CG iterations took only %.6lf seconds (KMAX = %d).\n", k, (time2-time1), KMAX);
         printf("The computed solution is:\n");
     }
 
@@ -182,7 +189,7 @@ void bspcg(){
         iglob=vindex[i];
         HERE("FINAL ANSWER *** proc=%d v[%d]=%lf \n",s,iglob,v[i]);
     }
-    HERE("...which gives, filled in (should equal v):\n");
+    HERE("...which gives, filled in (should equal u):\n");
     bspmv(p,s,n,nz,nrows,ncols,a,ia,destprocu,destindu,
           srcprocv,srcindv,nv,nu,v,w);
     for(i=0; i<nu; i++){
@@ -213,7 +220,7 @@ void bspcg(){
         printf("========= Solution =========\n");
         printf("Final error = %Le\n\n", rho_old);
         printf("csv_answer:\tP\tN\tnz\ttime\titers\n");
-        printf("csv_answer:\t%d\t%d\t%d\t%lf\t%d\n",P,n,total_nz,(time2-time1),k-1);
+        printf("csv_answer:\t%d\t%d\t%d\t%lf\t%d\n",P,n,total_nz,(time2-time1),k);
 
 #ifdef DEBUG
         for(i=0; i<n; i++) {

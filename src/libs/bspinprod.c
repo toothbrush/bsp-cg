@@ -1,5 +1,6 @@
 #include "bspfuncs.h"
 #include "bspedupack.h"
+#include "debug.h"
 
 // This is my own version, bspip from BSPedupack
 // cannot handle v1 and v2 having arbitrary distributions.
@@ -18,11 +19,13 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
 
     bsp_sync();
     for(i=0; i<nv1; i++) {
-        /*printf("bsp_get(procv2[i],\tv2,\tindv2[i]*SZDBL,\t&v2_locals[i],\tSZDBL);\n");*/
-        /*printf("bsp_get(%d,\t\tv2,\t%d*SZDBL,\t&v2_locals[%d],\tSZDBL);\n",procv2[i],indv2[i],i);*/
+        //printf("bsp_get(procv2[i],\tv2,\tindv2[i]*SZDBL,\t&v2_locals[i],\tSZDBL);\n");
+        //printf("bsp_get(%d,\t\tv2,\t%d*SZDBL,\t&v2_locals[%d],\tSZDBL);\n",procv2[i],indv2[i],i);
         bsp_get(procv2[i], v2, indv2[i]*SZDBL, &v2_locals[i], SZDBL);
 
-        //printf("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
+        bsp_sync();
+        // zero here is right if the call is from v.v... it's zero!
+        HERE("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
     }
     bsp_sync();
     bsp_pop_reg(v2);
@@ -66,19 +69,21 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
 void copyvec(
         int nv, int nu,
         double* v, double* u,
-        int* procu, int* indu)
+        int* procv, int* indv)
 {
     int i;
 
-    bsp_push_reg(u, nu*SZDBL);
+    bsp_push_reg(v, nv*SZDBL);
     bsp_sync();
-    for(i=0;i<nv;i++) {
+    for(i=0;i<nu;i++) {
 
-        bsp_put(procu[i], &v[i], u, indu[i]*SZDBL, SZDBL);
+        printf("bsp_get(procv[i], v, indv[i]*SZDBL, &u[i], SZDBL);\n");
+        printf("bsp_get(%d       , v, %d*SZDBL, &u[%d], SZDBL);\n",procv[i],indv[i],i);
+        bsp_get(procv[i], v, indv[i]*SZDBL, &u[i], SZDBL);
 
     }
     bsp_sync();
-    bsp_pop_reg(u);
+    bsp_pop_reg(v);
 
 }
 
