@@ -72,6 +72,7 @@ void bspcg(){
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
     vecfreei(ja);
+    assert(nrows != ncols); // for interesting test cases.
 
     /* Read vector distributions */
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
@@ -136,6 +137,8 @@ void bspcg(){
             rho > EPS * EPS * bspip(p,s,nv,nv,v,v,srcprocv,srcindv)) {
         if ( k == 0 ) {
             // do p := r
+            //TODO: cannot depend on destproc and friends, as they
+            //have length nrows/ncols, not nv/nu
             copyvec(nu, nv,r,pvec, destprocu, destindu);
             for(i=0;i<nv;i++) {
                 printf("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);

@@ -357,6 +357,8 @@ void bspinputvec(int p, int s, const char *filename,
                 i--;  
                 proc--;
                 ind= Nv[proc];
+                // is the following ensuring that vectors are sensibly-
+                // ordered?
                 if(i!=k)
                     bsp_abort("Error: i not equal to index \n");
                 bsp_put(i%p,&proc,tmpproc,(i/p)*SZINT,SZINT);
