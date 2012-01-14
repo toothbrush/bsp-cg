@@ -14,3 +14,6 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
         int *procv2, int *indv2);
 
 void bspinprod();
+void addvec(int nv, double *v, int nr, double *remote,
+        int *procr, int *indr);
+void copyvec(int nv, int nu, double* v, double* u, int* procu, int* indu);

@@ -51,3 +51,45 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
     return alpha;
 
 } /* end bspip */
+
+/*
+ * copy distributed vec v into u
+ */
+void copyvec(
+        int nv, int nu,
+        double* v, double* u,
+        int* procu, int* indu)
+{
+    int i;
+
+    bsp_push_reg(u, nu*SZDBL);
+    bsp_sync();
+    for(i=0;i<nv;i++) {
+
+        bsp_put(procu[i], &v[i], u, indu[i]*SZDBL, SZDBL);
+
+    }
+    bsp_sync();
+    bsp_pop_reg(u);
+
+}
+
+/*
+ * add some other distributed vec to v (local)
+ */
+
+void addvec(int nv, double *v, int nr, double *remote,
+        int *procr, int *indr) {
+
+    double tmp;
+    bsp_push_reg(remote,nr*SZDBL);
+    bsp_sync();
+
+    int i;
+    for(i=0;i<nv;i++) {
+        bsp_get(procr[i], remote, indr[i]*SZDBL, &tmp, SZDBL);
+        v[i] += tmp;
+    }
+    bsp_pop_reg(remote);
+
+}
