@@ -77,19 +77,22 @@ void bspcg(){
 
     /* Read vector distributions */
     bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
-    HERE("Loaded distribution vec v.\n");
+    HERE("Loaded distribution vec v (nv=%d).\n",nv);
     for(i=0; i<nv; i++){
         iglob= vindex[i];
       //  HERE("original input vec %d = %lf\n", iglob, v[i]);
     }
 
     bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
+    HERE("Loaded distribution vec u (nu=%d).\n",nu);
+    for(i=0; i<nu; i++){
+        iglob= uindex[i];
+      //  HERE("original input vec %d = %lf\n", iglob, v[i]);
+    }
 
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
     if(s==0)
         printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
-
-    assert(nu==nv); // we want the distributions to be equal
 
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
@@ -115,6 +118,7 @@ void bspcg(){
     bspmv_init(p,s,n,nrows,ncols,nu,nv,rowindex,colindex,uindex,vindex,
                srcprocu,srcindu,destprocv,destindv);
 
+    bsp_abort("normal...");
     bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocu,srcindu,
             destprocv,destindv, nu, nv, u, r);
     negate(nv, r);
