@@ -39,6 +39,15 @@ void bspcg(){
     p= bsp_nprocs(); /* p=P */
     s= bsp_pid();
 
+    pid_t pid;
+
+	/* get the process id */
+	if ((pid = getpid()) < 0) {
+	  bsp_abort("unable to get pid\n");
+	} else {
+	  HERE("The process id is %d\n", pid);
+    }
+
     // only proc 0 reads the files.
     if(s==0) {
         HERE("Start of BSP section.\n");
@@ -72,7 +81,8 @@ void bspcg(){
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
     vecfreei(ja);
-    assert(nrows != ncols); // for interesting test cases.
+    if(p!=1)
+        assert(nrows != ncols); // for interesting test cases.
 
     int *owneru, *indu;
     /* Read vector distributions */
@@ -81,6 +91,9 @@ void bspcg(){
     for(i=0; i<nu; i++){
         iglob= uindex[i];
         HERE("original input vec %d = %lf\n", iglob, u[i]);
+    }
+    for(i=0;i<n;i++) {
+        HERE("u: global idx %d, and proc %d has it at spot %d\n", i,owneru[i],indu[i]);
     }
 
     int *ownerv, *indv;
@@ -91,7 +104,8 @@ void bspcg(){
         HERE("v: global idx %d, and proc %d has it at spot %d\n", i,ownerv[i],indv[i]);
     }
 
-    assert(nv!=nu); // we want interesting testcases.
+    if(p!=1)
+        assert(nv!=nu); // we want interesting testcases.
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
     if(s==0)
         printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
@@ -99,7 +113,6 @@ void bspcg(){
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
     }
-    bsp_abort("finished vecs\n");
     bsp_sync();
     time0= bsp_time();
 
@@ -127,10 +140,10 @@ void bspcg(){
     // but our guess for x = 0;
     for(i=0; i< nu; i++) {
         r[i] = u[i];
-        printf("r[%d] = %lf\n", uindex[i], r[i]);
+        HERE("r[%d] = %lf\n", uindex[i], r[i]);
     }
 
-    long double rho = bspip(p,s,nu,nu,r,r,destprocu,destindu);
+    long double rho = bspip(p,s,nu,nu,r,uindex,r,owneru,indu);
     long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
     bsp_sync();
@@ -138,16 +151,16 @@ void bspcg(){
     double *pvec = vecallocd(nv);
     double *w    = vecallocd(nu);
 
-    printf("rho (r.r) turned out to be = %Lf\n", rho);
+    HERE("rho (r.r) turned out to be = %Lf\n", rho);
     while ( k < KMAX &&
-            rho > EPS * EPS * bspip(p,s,nv,nv,v,v,srcprocv,srcindv)) {
+            rho > EPS * EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
         if ( k == 0 ) {
             // do p := r
             //TODO: cannot depend on destproc and friends, as they
             //have length nrows/ncols, not nv/nu
-            copyvec(nu, nv,r,pvec, destprocu, destindu);
+            copyvec(s,nu, nv,r,pvec, vindex, owneru, indu);
             for(i=0;i<nv;i++) {
-                printf("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);
+                HERE("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);
                 bsp_sync();
 
             }
@@ -155,14 +168,14 @@ void bspcg(){
         } else {
             beta = rho/rho_old;
             scalevec(nv, beta, pvec);
-            addvec(nv,pvec, nu, r, destprocu, destindu);
+            addvec(nv,pvec,vindex, nu, r, owneru, indu);
             if(s==0)
                 printf("[Iteration %02d] rho  = %Le\n", k, rho);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
               destprocu,destindu,nv,nu,pvec,w);
 
-        gamma = bspip(p,s,nv,nu,pvec,w,destprocu,destindu);
+        gamma = bspip(p,s,nv,nu,pvec,vindex,w,owneru,indu);
 
         alpha = rho/gamma;
 
@@ -173,7 +186,7 @@ void bspcg(){
                                r);
 
         rho_old = rho;
-        rho = bspip(p,s,nu,nu,r,r,destprocu,destindu);
+        rho = bspip(p,s,nu,nu,r,uindex,r,owneru,indu);
 
         k++;
 
