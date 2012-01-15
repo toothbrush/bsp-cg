@@ -168,6 +168,7 @@ void bspcg(){
             //bsp_abort("normal\n");
         } else {
             beta = rho/rho_old;
+            // p:= r + beta*p
             scalevec(nv, beta, pvec);
             addvec(nv,pvec,vindex, nu, r, owneru, indu);
             if(s==0)
@@ -211,13 +212,6 @@ void bspcg(){
     for(i=0; i<nv; i++){
         iglob=vindex[i];
         HERE("FINAL ANSWER *** proc=%d v[%d]=%lf \n",s,iglob,v[i]);
-    }
-    HERE("...which gives, filled in (should equal u):\n");
-    bspmv(p,s,n,nz,nrows,ncols,a,ia,destprocu,destindu,
-          srcprocv,srcindv,nv,nu,v,w);
-    for(i=0; i<nu; i++){
-        iglob=uindex[i];
-        HERE("CHECKSUM     *** proc=%d A.v[%d]=%lf \n",s,iglob,w[i]);
     }
 
     double* answer = vecallocd(n);
