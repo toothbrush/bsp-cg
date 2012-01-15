@@ -5,8 +5,9 @@
 // This is my own version, bspip from BSPedupack
 // cannot handle v1 and v2 having arbitrary distributions.
 
-double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
-        int *procv2, int *indv2)
+double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
+                                                 double *v2,
+                            int *procv2, int *indv2)
 {
     /* Compute inner product of vectors x and y of length n>=0 */
     // here v1 is the local vector and v2 is the remote vector.
@@ -21,11 +22,11 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
     for(i=0; i<nv1; i++) {
         //printf("bsp_get(procv2[i],\tv2,\tindv2[i]*SZDBL,\t&v2_locals[i],\tSZDBL);\n");
         //printf("bsp_get(%d,\t\tv2,\t%d*SZDBL,\t&v2_locals[%d],\tSZDBL);\n",procv2[i],indv2[i],i);
-        bsp_get(procv2[i], v2, indv2[i]*SZDBL, &v2_locals[i], SZDBL);
+        bsp_get(procv2[v1index[i]], v2, indv2[v1index[i]]*SZDBL, &v2_locals[i], SZDBL);
 
         bsp_sync();
         // zero here is right if the call is from v.v... it's zero!
-        HERE("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
+        //HERE("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
     }
     bsp_sync();
     bsp_pop_reg(v2);
@@ -66,9 +67,10 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, double *v2,
 /*
  * copy distributed vec v into u
  */
-void copyvec(
+void copyvec(int s,
         int nv, int nu,
         double* v, double* u,
+        int* uindex,
         int* procv, int* indv)
 {
     int i;
@@ -77,9 +79,12 @@ void copyvec(
     bsp_sync();
     for(i=0;i<nu;i++) {
 
-        printf("bsp_get(procv[i], v, indv[i]*SZDBL, &u[i], SZDBL);\n");
-        printf("bsp_get(%d       , v, %d*SZDBL, &u[%d], SZDBL);\n",procv[i],indv[i],i);
-        bsp_get(procv[i], v, indv[i]*SZDBL, &u[i], SZDBL);
+        HERE("bsp_get(procv[uindex[i]], v, indv[uindex[i]]*SZDBL, &u[i], SZDBL);\n");
+
+        HERE("{\n\ti=%d\n\tuindex[i]=%d\n\tprocv=%d\n\tindv=%d\n}\n", i,uindex[i],procv[uindex[i]],indv[uindex[i]]);
+        bsp_get(procv[uindex[i]], v, indv[uindex[i]]*SZDBL, &u[i], SZDBL);
+        bsp_sync(); //useless
+        HERE("we copied u[%d]=%lf\n",uindex[i],u[i]);
 
     }
     bsp_sync();
@@ -91,7 +96,7 @@ void copyvec(
  * add some other distributed vec to v (local)
  */
 
-void addvec(int nv, double *v, int nr, double *remote,
+void addvec(int nv, double *v, int*vindex, int nr, double *remote,
         int *procr, int *indr) {
 
     double *tmp = vecallocd(nv);
@@ -100,7 +105,7 @@ void addvec(int nv, double *v, int nr, double *remote,
 
     int i;
     for(i=0;i<nv;i++) {
-        bsp_get(procr[i], remote, indr[i]*SZDBL, &tmp[i], SZDBL);
+        bsp_get(procr[vindex[i]], remote, indr[vindex[i]]*SZDBL, &tmp[i], SZDBL);
     }
     bsp_pop_reg(remote);
     bsp_sync();
