@@ -82,8 +82,8 @@ void bspcg(){
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
     vecfreei(ja);
-    if(p!=1)
-        assert(nrows != ncols); // for interesting test cases.
+    //if(p!=1)
+    //    assert(nrows != ncols); // for interesting test cases.
 
     int *owneru, *indu;
     /* Read vector distributions */
@@ -107,8 +107,8 @@ void bspcg(){
             assert(i==vindex[indv[i]]); //sanity check.
     }
 
-    if(p!=1)
-        assert(nv!=nu); // we want interesting testcases.
+    //if(p!=1)
+    //    assert(nv!=nu); // we want interesting testcases.
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
     if(s==0)
         printf("Loaded a %d*%d matrix, proc 0 has %d nz.\n", n,n,nz);
