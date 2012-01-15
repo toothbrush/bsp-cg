@@ -25,52 +25,67 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
         //printf("bsp_get(%d,\t\tv2,\t%d*SZDBL,\t&v2_locals[%d],\tSZDBL);\n",procv2[i],indv2[i],i);
         bsp_get(procv2[v1index[i]], v2, indv2[v1index[i]]*SZDBL, &v2_locals[i], SZDBL);
 
-        bsp_sync();
+        //bsp_sync();
         // zero here is right if the call is from v.v... it's zero the first time!
-        HERE("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
+        //HERE("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
     }
-    bsp_sync();
-    bsp_pop_reg(v2);
-    bsp_sync();
 
     double myip=0.0;
 
+    bsp_sync();
     for(i=0;i<nv1;i++) {
         HERE("%f += %f*%f\n", myip, v1[i], v2_locals[i]);
         myip += v1[i]*v2_locals[i];
     }
 
-    double* Inprod;
-    Inprod = vecallocd(p);
+    size_t tagsz = SZINT;
+    bsp_set_tagsize(&tagsz);
     bsp_sync();
-    bsp_push_reg(Inprod, p*SZDBL);
-    bsp_sync();
-    HERE("Inprod = %p, p = %d\n", Inprod, p);
+
+    //HERE("Inprod = %p, p = %d, s=%d\n", ip, p,s);
     HERE("myip = %p\n", &myip);
 
     for(i=0;i<p;i++) {
 
-        //HERE("bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);\n");
-        //HERE("bsp_put(%d, &%f, Inprod, %d*SZDBL, SZDBL);\n",i,myip,s);
+        if(s==i) // don't send myself messages.
+            continue;
+        //HERE("bsp_put(i, &myip, ip, s*SZDBL, SZDBL);\n");
+        //HERE("bsp_put(%d, &%f, ip, %d*SZDBL, SZDBL);\n",i,myip,s);
 
-        bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);
-        //bsp_get(i, &myip, 0, &Inprod[i], SZDBL);
+        bsp_send(i, &s, &myip, SZDBL);
+        //bsp_put(i, &myip, ip, s*SZDBL, SZDBL);
+
+        //bsp_get(i, &myip, 0, &ip[i], SZDBL);
         HERE("que?\n");
-        bsp_sync();
         HERE("bspip put to proc %d=%lf\n", i, myip);
 
     }
 
     bsp_sync();
+    int nsums;
+    size_t nbytes;
 
-    bsp_pop_reg(Inprod);
+    double alpha = myip;
+    bsp_qsize(&nsums, &nbytes);
+    int status, tag;
+    bsp_get_tag(&status, &tag);
+    HERE("queue is %d long.\n", nsums);
+    for(i=0;i<nsums; i++) {
+        bsp_move(&myip, SZDBL);
 
-    double alpha = 0.0;
-    for(i=0;i<p;i++)
-        alpha += Inprod[i];
+        alpha += myip;
+        HERE("received %lf from %d\n", myip, tag);
+        bsp_get_tag(&status, &tag);
 
-    free(Inprod);
+    }
+
+    bsp_pop_reg(v2);
+
+    //for(i=0;i<p;i++)
+    //    alpha += ip[i];
+
     free(v2_locals);
+    bsp_sync();
 
     return alpha;
 

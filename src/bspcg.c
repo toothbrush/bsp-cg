@@ -148,12 +148,13 @@ void bspcg(){
     long double rho = bspip(p,s,nu,nu,r,uindex,r,owneru,indu);
     long double alpha,gamma,rho_old,beta;
     rho_old = 0; // just kills a warning.
-    bsp_sync();
 
     double *pvec = vecallocd(nv);
     double *w    = vecallocd(nu);
 
     HERE("rho (r.r) turned out to be = %Lf\n", rho);
+    bsp_sync();
+    bsp_abort("first fix up bspip.\n");
     while ( k < KMAX &&
             rho > EPS * EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
         if ( k == 0 ) {
