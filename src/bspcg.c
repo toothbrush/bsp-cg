@@ -58,15 +58,15 @@ void bspcg(){
 
         if(!file_exists(matrixfile)) {
             HERE("Matrix file doesn't exist. (%s)\n", matrixfile);
-            bsp_abort(0);
+            bsp_abort("matrix doesn't exist\n");
         }
         if(!file_exists(vfilename)) {
             HERE("V-distrib file doesn't exist. (%s)\n", vfilename);
-            bsp_abort(0);
+            bsp_abort("vector v doesn't exist\n");
         }
         if(!file_exists(ufilename)) {
             HERE("U-distrib file doesn't exist. (%s)\n", ufilename);
-            bsp_abort(0);
+            bsp_abort("vector u doesn't exist\n");
         }
     }
     if (s==0){
@@ -155,7 +155,9 @@ void bspcg(){
     HERE("rho (r.r) turned out to be = %Lf\n", rho);
     bsp_sync();
     while ( k < KMAX &&
-            rho > EPS * EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
+            sqrt(rho) > EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
+        if(s==0)
+            printf("[Iteration %02d] rho  = %e\n", k+1, sqrt(rho));
         if ( k == 0 ) {
             // do p := r
             copyvec(s,nu, nv,r,pvec, uindex, ownerv, indv);
@@ -164,8 +166,6 @@ void bspcg(){
             // p:= r + beta*p
             scalevec(nv, beta, pvec);
             addvec(nv,pvec,vindex, nu, r, owneru, indu);
-            if(s==0)
-                printf("[Iteration %02d] rho  = %Le\n", k, rho);
         }
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
               destprocu,destindu,nv,nu,pvec,w);
@@ -231,7 +231,7 @@ void bspcg(){
             total_nz += nz_per_proc[i];
 
         printf("========= Solution =========\n");
-        printf("Final error = %Le\n\n", rho_old);
+        printf("Final error = %e\n\n", sqrt(rho_old));
         printf("csv_answer_head:\tP,N,nz,time,iters,success\n");
         printf("csv_answer_data:\t%d,%d,%d,%lf,%d,%d\n",P,n,total_nz,(time2-time1),k,k<KMAX);
 

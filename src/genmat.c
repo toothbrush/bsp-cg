@@ -61,8 +61,6 @@ int main (int argc, char** argv) {
     // seed the random generator.
     srandom((unsigned)time(NULL));
 
-    fprintf(stderr,"INT_MAX = %d\n", INT_MAX);
-
     xs = vecalloci(nz);
     ys = vecalloci(nz);
     vals = vecallocd(nz);
@@ -160,7 +158,7 @@ int main (int argc, char** argv) {
 
     // add the missing diagonals, and add mu to each diagonal.
     int newsize = nz_generated + (N - diagonals_present);
-    fprintf(stderr,"reallocating arrays to %d long\n", newsize);
+    fprintf(stderr,"reallocating values array to %lluM \n", (unsigned long long)(SZDBL+2*SZINT)*newsize/1048576);
     int* diag_i;
     int* diag_j;
     double* diag_val;
