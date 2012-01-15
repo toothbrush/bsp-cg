@@ -26,31 +26,38 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
         bsp_get(procv2[v1index[i]], v2, indv2[v1index[i]]*SZDBL, &v2_locals[i], SZDBL);
 
         bsp_sync();
-        // zero here is right if the call is from v.v... it's zero!
+        // zero here is right if the call is from v.v... it's zero the first time!
         HERE("got %d = %lf\n", i, v2_locals[i]); // doesn't work if you don't sync first...
     }
     bsp_sync();
     bsp_pop_reg(v2);
+    bsp_sync();
 
     double myip=0.0;
 
     for(i=0;i<nv1;i++) {
+        HERE("%f += %f*%f\n", myip, v1[i], v2_locals[i]);
         myip += v1[i]*v2_locals[i];
     }
 
     double* Inprod;
     Inprod = vecallocd(p);
-    HERE("Inprod = %p, p=%d\n", Inprod, p);
+    bsp_sync();
     bsp_push_reg(Inprod, p*SZDBL);
     bsp_sync();
+    HERE("Inprod = %p, p = %d\n", Inprod, p);
+    HERE("myip = %p\n", &myip);
 
     for(i=0;i<p;i++) {
 
-        HERE("bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);\n");
-        HERE("bsp_put(%d, &%f, Inprod, %d*SZDBL, SZDBL);\n",i,myip,s);
+        //HERE("bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);\n");
+        //HERE("bsp_put(%d, &%f, Inprod, %d*SZDBL, SZDBL);\n",i,myip,s);
 
         bsp_put(i, &myip, Inprod, s*SZDBL, SZDBL);
+        //bsp_get(i, &myip, 0, &Inprod[i], SZDBL);
         HERE("que?\n");
+        bsp_sync();
+        HERE("bspip put to proc %d=%lf\n", i, myip);
 
     }
 
