@@ -200,7 +200,7 @@ void bspcg(){
 
     if (s==0){
         HERE("End of matrix-vector multiplications.\n");
-        HERE("Initialization took only %.6lf seconds.\n", time1-time0);
+        printf("Initialization took only %.6lf seconds,\n", time1-time0);
         printf("%d CG iterations took only %.6lf seconds (KMAX = %d).\n", k, (time2-time1), KMAX);
         printf("The computed solution is:\n");
     }

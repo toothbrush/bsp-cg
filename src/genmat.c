@@ -236,7 +236,6 @@ int main (int argc, char** argv) {
     fprintf(stderr,"Left with %d nonzeroes; nonzero density = %lf (desired=%lf)\n", newsize, newsize/((double)N*N), sparsity);
     fprintf(stderr,"========== OUTPUTTING ... ==========\n");
 
-    //outputSimpleMatrix(newsize, diag_i, diag_j, diag_val, vec);
     outputMondriaanMatrix(newsize, diag_i, diag_j, diag_val, vec);
     outputMathematicaMatrix(newsize, diag_i, diag_j, diag_val, vec);
 
@@ -368,7 +367,7 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
     char* filename = malloc(SZCHAR*1024);
 
     sprintf(filename, "mat-check-%d-%f.nb", N, sparsity);
-    fprintf(stderr,"%s\n", filename);
+    fprintf(stderr,"%s\t", filename);
     fp = fopen(filename, "w");
 
     fprintf(fp,"Print[\"reading matrix...\"]\n");
@@ -377,10 +376,14 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
     int c;
     for(c=0;c<nz-1;c++) {
 
+        //progress indicator
+        if((c % (nz/10) )==0)
+            fprintf(stderr, ".");
         fprintf(fp,"{%d, %d} -> %lf,\n", i[c]+1, j[c]+1, v[c]); // Mathematica expects 1-based coordinates.
 
     }
     fprintf(fp,"{%d, %d} -> %lf\n", i[nz-1]+1, j[nz-1]+1, v[nz-1]); // Mathematica expects 1-based coordinates.
+    fprintf(stderr, "\n");
 
     fprintf(fp,"} ] ;\n");
     fprintf(fp,"(* somemat // MatrixForm *)\n");
@@ -410,55 +413,6 @@ void outputMathematicaMatrix(int nz, int*i, int*j, double*v, double*vec) {
     fclose(fp);
 
 }
-void outputSimpleMatrix(int nz, int*i, int*j, double*v, double*vec) {
-
-    // here we'll print the matrix in simple format, for one proc.
-    // this is nice for testing CG without going through Mondriaan first.
-
-    // no header.
-    //size line: m n nz
-    FILE* fp;
-
-    char* filename = malloc(1024*SZCHAR);
-
-    sprintf(filename, "mat-%d-%f.mtx", N, sparsity);
-    fprintf(stderr, "%s\n", filename);
-
-    fp = fopen(filename, "w");
-    fprintf(fp, "%d %d %d %d\n", N, N, nz, 1); // one processor, i.e. not distributed
-    // begin and end bounds of proc 1 are 0 and nz
-    fprintf(fp,"0\n%d\n", nz);
-
-    // next the value lines: i j value:
-    int c;
-    for(c=0;c<nz;c++) {
-
-        fprintf(fp,"%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // bsp-cg expects 1-based coordinates.
-
-    }
-    fclose(fp);
-
-    fprintf(stderr, "======= vector v follows ======\n");
-
-    sprintf(filename, "mat-%d.v", N);
-    fprintf(stderr,"%s\n", filename);
-
-    fp = fopen(filename, "w");
-
-    // N vector entries, one proc.
-    fprintf(fp,"%d %d\n", N, 1);
-    for(c=0;c<N;c++) {
-        // each line is
-        //   coordinate,processor,value
-        // for now, without value:
-        fprintf(fp,"%d %d\n", c+1, 1);
-        //fprintf(fp,"%d %d %lf\n", c+1, 1, vec[c]);
-    }
-
-    fclose(fp);
-    free(filename);
-
-}
 void outputMondriaanMatrix(int nz, int*i, int*j, double*v, double*vec) {
 
     // here we'll print the matrix in EMM format.
@@ -468,7 +422,7 @@ void outputMondriaanMatrix(int nz, int*i, int*j, double*v, double*vec) {
     char* filename = malloc(SZCHAR*1024);
     sprintf(filename,"linsys-%d-%f.emm", N, sparsity);
 
-    fprintf(stderr,"%s\n", filename);
+    fprintf(stderr,"%s\t", filename);
 
     fp = fopen(filename,"w");
     //header:
@@ -480,10 +434,14 @@ void outputMondriaanMatrix(int nz, int*i, int*j, double*v, double*vec) {
     int c;
     for(c=0;c<nz;c++) {
 
+        //progress indicator
+        if((c % (nz/10) )==0)
+            fprintf(stderr, ".");
         fprintf(fp, "%d %d %lf\n", i[c]+1, j[c]+1, v[c]); // Mondriaan expects 1-based coordinates.
 
     }
 
+    fprintf(stderr, "\n");
     // ...and now for the vector-to-be-solved-for:
     fprintf(fp, "%%%%b vector double general array original\n");
     //size line:
