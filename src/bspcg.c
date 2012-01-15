@@ -236,8 +236,8 @@ void bspcg(){
 
         printf("========= Solution =========\n");
         printf("Final error = %Le\n\n", rho_old);
-        printf("csv_answer:\tP\tN\tnz\ttime\titers\n");
-        printf("csv_answer:\t%d\t%d\t%d\t%lf\t%d\n",P,n,total_nz,(time2-time1),k);
+        printf("csv_answer_head:\tP,N,nz,time,iters,success\n");
+        printf("csv_answer_data:\t%d,%d,%d,%lf,%d,%d\n",P,n,total_nz,(time2-time1),k,k<KMAX);
 
 #ifdef DEBUG
         for(i=0; i<n; i++) {

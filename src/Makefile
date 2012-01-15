@@ -1,7 +1,6 @@
 include cc.mk
 LFLAGS= -lm -lbsponmpi #-Wl,-rpath -Wl,LIBDIR
 
-CFLAGS+= -DDEBUG
 # the objects required to build the final executable CG
 OBJS=bspcg.o
 OBJS_SEQ=seq.o
