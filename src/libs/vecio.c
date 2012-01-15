@@ -350,7 +350,8 @@ void bspinputvec(int p, int s, const char *filename,
                temporary location. This is done n/p components
                at a time to save memory  */
             for(k=q*b; k<(q+1)*b && k<n; k++){
-                // we're going to generate a random value here.
+                // we're going to generate a random value here, because
+                // Mondriaan doesn't preserve nonzero values of vectors.
                 //fscanf(fp,"%d %d %lf\n", &i, &proc, &allVals[k]); // also save value
                 fscanf(fp,"%d %d\n", &i, &proc); // also save value
                 allVals[k]=ran();

@@ -9,7 +9,7 @@
 #include "libs/debug.h"
 
 #define EPS (10E-12)
-#define KMAX (15)
+#define KMAX (1500)
 
 /*
  * This program takes as input:
@@ -41,11 +41,11 @@ void bspcg(){
 
     pid_t pid;
 
-	/* get the process id */
-	if ((pid = getpid()) < 0) {
-	  bsp_abort("unable to get pid\n");
-	} else {
-	  HERE("The process id is %d\n", pid);
+    /* get the process id */
+    if ((pid = getpid()) < 0) {
+        bsp_abort("unable to get pid\n");
+    } else {
+        HERE("The process id is %d\n", pid);
     }
     time0= bsp_time();
 
@@ -82,8 +82,6 @@ void bspcg(){
     triple2icrs(n,nz,ia,ja,a,&nrows,&ncols,&rowindex,&colindex);
     HERE("Done converting to ICRS. nrows = %d, ncols = %d\n", nrows, ncols);
     vecfreei(ja);
-    //if(p!=1)
-    //    assert(nrows != ncols); // for interesting test cases.
 
     int *owneru, *indu;
     /* Read vector distributions */
@@ -133,6 +131,8 @@ void bspcg(){
     int k;
 
     k = 0; // iteration number
+
+    // initialise mv data structures for doing u <- A.v
     bspmv_init(p,s,n,nrows,ncols,nv,nu,rowindex,colindex,vindex,uindex,
                srcprocv,srcindv,destprocu,destindu);
 
@@ -140,9 +140,9 @@ void bspcg(){
     // corresponds to:
     // r := b - Ax,
     // but our guess for x = 0;
+    // therefore the first time it corresponds to copying b into r
     for(i=0; i< nu; i++) {
         r[i] = u[i];
-        HERE("r[%d] = %lf\n", uindex[i], r[i]);
     }
 
     long double rho = bspip(p,s,nu,nu,r,uindex,r,owneru,indu);
@@ -158,14 +158,7 @@ void bspcg(){
             rho > EPS * EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
         if ( k == 0 ) {
             // do p := r
-            HERE("putting into %p\n", pvec);
             copyvec(s,nu, nv,r,pvec, uindex, ownerv, indv);
-            for(i=0;i<nv;i++) {
-                HERE("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);
-
-            }
-            //bsp_sync();
-            //bsp_abort("normal\n");
         } else {
             beta = rho/rho_old;
             // p:= r + beta*p
@@ -177,13 +170,16 @@ void bspcg(){
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
               destprocu,destindu,nv,nu,pvec,w);
 
+        // gamma = p^T w
         gamma = bspip(p,s,nv,nu,pvec,vindex,w,owneru,indu);
 
         alpha = rho/gamma;
 
-        local_axpy(nv,alpha,pvec,v,   // alpha*p + x
-                                 v);  // into x
+        // x := x + alpha*p
+        local_axpy(nv,alpha,pvec,v,
+                                 v);
 
+        // r := r - alpha*w
         local_axpy(nu,-alpha,w,r,
                                r);
 
@@ -197,7 +193,7 @@ void bspcg(){
     // end heavy lifting.
 
     // postcondition:
-    // u s.t. A.u = v
+    // v s.t. A.v = u
 
     bsp_sync();
     time2= bsp_time();
