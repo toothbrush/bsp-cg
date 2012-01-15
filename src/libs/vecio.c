@@ -7,6 +7,8 @@
 #include "paullib.h"
 #include <time.h>
 
+#include "debug.h"
+
 // This is from BSPedupack
 
 void bspinput2triple(char*filename, int p, int s, int *pnA, int *pnz, 
@@ -271,7 +273,8 @@ void triple2icrs(int n, int nz, int *ia,  int *ja, double *a,
 
 void bspinputvec(int p, int s, const char *filename,
                  int *pn, int *pnv, int **pvindex,
-                 double **pvalues){
+                 double **pvalues,
+                 int **owner, int **owneridx){
   
     /* This function reads the distribution of a dense vector v
        from the input file and initializes the corresponding local
@@ -335,7 +338,8 @@ void bspinputvec(int p, int s, const char *filename,
     }
 
     // seed the random generator.
-    srandom((unsigned)time(NULL));
+    srandom((unsigned)123);
+    //srandom((unsigned)time(NULL));
 
     /* block size for vector read */
     b= (n%p==0 ? n/p : n/p+1);
@@ -354,7 +358,7 @@ void bspinputvec(int p, int s, const char *filename,
                    0..n-1 and 0..p-1, assuming they were
                    1..n and 1..p */
 
-                i--;  
+                i--;
                 proc--;
                 ind= Nv[proc];
                 // is the following ensuring that vectors are sensibly-
@@ -376,31 +380,54 @@ void bspinputvec(int p, int s, const char *filename,
     }
     bsp_sync();
     /* Store the components at their final destination */
-    vindex= vecalloci(nv);  
+    vindex= vecalloci(nv);
     bsp_push_reg(vindex,nv*SZINT);
     bsp_sync();
 
     for(k=0; k<np; k++){
         globk= k*p+s;
         bsp_put(tmpproc[k],&globk,vindex,tmpind[k]*SZINT,SZINT);
+        HERE("bsp_put(tmpproc[k],&globk,vindex,tmpind[k]*SZINT,SZINT);\n");
+        HERE("bsp_put(%d         ,  %d   ,vindex,   %d     *SZINT,SZINT);\n", tmpproc[k],globk,tmpind[k]);
     }
     bsp_sync();
 
     bsp_pop_reg(vindex);
+
+    // we want:
+    // proc %d knows that proc %d owns (local) idx %d (=global vindex(..)),
+    // and stores it in remote idx %d
+
     vecfreei(tmpind);
     vecfreei(tmpproc);
 
     /* grab reals from P0 */
+    // and also tell each other who owns what, and where.
+
+    int* allowners = vecalloci(n);
+    int* alllocalindices = vecalloci(n);
 
     bsp_push_reg(allVals, n*SZDBL);
+    bsp_push_reg(allowners, n*SZINT);
+    bsp_push_reg(alllocalindices, n*SZINT);
     bsp_sync();
     double *values = vecallocd(nv);
 
     for ( k = 0; k< nv; k++)
     {
         bsp_get(0, allVals, vindex[k]*SZDBL, &values[k], SZDBL);
+        HERE("I own idx %d\n", vindex[k]+1);
+        for(i = 0; i<p; i++) {
+            // tell everyone about ownership of this value
+            bsp_put(i, &s, allowners, vindex[k]*SZINT, SZINT);
+            // and also mention where I store that value
+            bsp_put(i, &k, alllocalindices, vindex[k]*SZINT, SZINT);
+        }
     }
+    bsp_sync();
     bsp_pop_reg(allVals);
+    bsp_pop_reg(allowners);
+    bsp_pop_reg(alllocalindices);
     bsp_sync();
 
     vecfreed(allVals);
@@ -411,5 +438,9 @@ void bspinputvec(int p, int s, const char *filename,
     *pnv= nv;
     *pvindex= vindex;
     *pvalues= values;
+
+    // and the new stuff:
+    *owner = allowners;
+    *owneridx = alllocalindices;
 
 } /* end bspinputvec */

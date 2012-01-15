@@ -74,17 +74,22 @@ void bspcg(){
     vecfreei(ja);
     assert(nrows != ncols); // for interesting test cases.
 
+    int *owneru, *indu;
     /* Read vector distributions */
-    bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u);
+    bspinputvec(p,s,ufilename,&n,&nu,&uindex, &u, &owneru, &indu);
     HERE("Loaded distribution vec u (nu=%d).\n",nu);
     for(i=0; i<nu; i++){
         iglob= uindex[i];
         HERE("original input vec %d = %lf\n", iglob, u[i]);
     }
 
-    bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v);
+    int *ownerv, *indv;
+    bspinputvec(p,s,vfilename,&n,&nv,&vindex, &v, &ownerv, &indv);
     HERE("Loaded distribution vec v (nv=%d). set to zero.\n",nv);
     zero(nv,v);
+    for(i=0;i<n;i++) {
+        HERE("v: global idx %d, and proc %d has it at spot %d\n", i,ownerv[i],indv[i]);
+    }
 
     assert(nv!=nu); // we want interesting testcases.
     HERE("Loaded a %d*%d matrix, this proc has %d nz.\n", n,n,nz);
@@ -94,6 +99,7 @@ void bspcg(){
     if (s==0){
         HERE("Initialization for matrix-vector multiplications\n");
     }
+    bsp_abort("finished vecs\n");
     bsp_sync();
     time0= bsp_time();
 
