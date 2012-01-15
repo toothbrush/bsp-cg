@@ -47,6 +47,7 @@ void bspcg(){
 	} else {
 	  HERE("The process id is %d\n", pid);
     }
+    time0= bsp_time();
 
     // only proc 0 reads the files.
     if(s==0) {
@@ -102,6 +103,8 @@ void bspcg(){
     zero(nv,v);
     for(i=0;i<n;i++) {
         HERE("v: global idx %d, and proc %d has it at spot %d\n", i,ownerv[i],indv[i]);
+        if(ownerv[i] == s)
+            assert(i==vindex[indv[i]]); //sanity check.
     }
 
     if(p!=1)
@@ -114,7 +117,6 @@ void bspcg(){
         HERE("Initialization for matrix-vector multiplications\n");
     }
     bsp_sync();
-    time0= bsp_time();
 
     // alloc metadata arrays
     int *srcprocv, *srcindv, *destprocu, *destindu;
@@ -156,9 +158,10 @@ void bspcg(){
             rho > EPS * EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
         if ( k == 0 ) {
             // do p := r
-            //TODO: cannot depend on destproc and friends, as they
-            //have length nrows/ncols, not nv/nu
-            copyvec(s,nu, nv,r,pvec, vindex, owneru, indu);
+            HERE("putting into %p\n", pvec);
+            bsp_sync();
+            copyvec(s,nu, nv,r,pvec, uindex, ownerv, indv);
+            bsp_sync();
             for(i=0;i<nv;i++) {
                 HERE("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);
                 bsp_sync();
