@@ -387,8 +387,6 @@ void bspinputvec(int p, int s, const char *filename,
     for(k=0; k<np; k++){
         globk= k*p+s;
         bsp_put(tmpproc[k],&globk,vindex,tmpind[k]*SZINT,SZINT);
-        HERE("bsp_put(tmpproc[k],&globk,vindex,tmpind[k]*SZINT,SZINT);\n");
-        HERE("bsp_put(%d         ,  %d   ,vindex,   %d     *SZINT,SZINT);\n", tmpproc[k],globk,tmpind[k]);
     }
     bsp_sync();
 
@@ -416,7 +414,6 @@ void bspinputvec(int p, int s, const char *filename,
     for ( k = 0; k< nv; k++)
     {
         bsp_get(0, allVals, vindex[k]*SZDBL, &values[k], SZDBL);
-        HERE("I own idx %d\n", vindex[k]+1);
         for(i = 0; i<p; i++) {
             // tell everyone about ownership of this value
             bsp_put(i, &s, allowners, vindex[k]*SZINT, SZINT);
