@@ -440,7 +440,7 @@ void bspinputvec(int p, int s, const char *filename,
     *pvalues= values;
 
     // and the new stuff:
-    *owner = allowners;
-    *owneridx = alllocalindices;
+    *owner= allowners;
+    *owneridx= alllocalindices;
 
 } /* end bspinputvec */
