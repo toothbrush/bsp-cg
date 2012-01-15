@@ -5,7 +5,8 @@ for i in mats/*.emm ; do
 for p in 1 2 4 8 ; do
 
 mat="$i-P$p"
-vec="$i-v$p"
+u="$i-u$p"
+v="$i-v$p"
 
 jobname=`basename $mat`.job
 
@@ -24,7 +25,7 @@ tee $jobname > /dev/null <<HERE
 #
 # @ node_usage = shared
 cd \$HOME/Students10/pdwalt/bsp-cg/
-./src/cg $mat $vec
+./src/cg $mat $u $v
 HERE
 
 
