@@ -34,7 +34,7 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
 
     bsp_sync();
     for(i=0;i<nv1;i++) {
-        HERE("%f += %f*%f\n", myip, v1[i], v2_locals[i]);
+     //   HERE("%f += %f*%f\n", myip, v1[i], v2_locals[i]);
         myip += v1[i]*v2_locals[i];
     }
 
@@ -42,8 +42,7 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
     bsp_set_tagsize(&tagsz);
     bsp_sync();
 
-    //HERE("Inprod = %p, p = %d, s=%d\n", ip, p,s);
-    HERE("myip = %p\n", &myip);
+ //   HERE("myip = %p\n", &myip);
 
     for(i=0;i<p;i++) {
 
@@ -56,8 +55,8 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
         //bsp_put(i, &myip, ip, s*SZDBL, SZDBL);
 
         //bsp_get(i, &myip, 0, &ip[i], SZDBL);
-        HERE("que?\n");
-        HERE("bspip put to proc %d=%lf\n", i, myip);
+       // HERE("que?\n");
+        //HERE("bspip put to proc %d=%lf\n", i, myip);
 
     }
 
@@ -69,12 +68,12 @@ double bspip(int p,int s,int nv1, int nv2, double* v1, int*v1index,
     bsp_qsize(&nsums, &nbytes);
     int status, tag;
     bsp_get_tag(&status, &tag);
-    HERE("queue is %d long.\n", nsums);
+    //HERE("queue is %d long.\n", nsums);
     for(i=0;i<nsums; i++) {
         bsp_move(&myip, SZDBL);
 
         alpha += myip;
-        HERE("received %lf from %d\n", myip, tag);
+     //   HERE("received %lf from %d\n", myip, tag);
         bsp_get_tag(&status, &tag);
 
     }
@@ -111,10 +110,10 @@ void copyvec(int s,
 
         // put my v into u somewhere remote
 
-        HERE("bsp_put(procu[vindex[i]], &v[i], u, indu[vindex[i]]*SZDBL, SZDBL);\n");
-        HERE("{\n\ti=%d\n\tvindex[i]=%d\n\tprocu=%d\n\tindu=%d\n\tu=%p\n}\n",
+        //HERE("bsp_put(procu[vindex[i]], &v[i], u, indu[vindex[i]]*SZDBL, SZDBL);\n");
+        /*HERE("{\n\ti=%d\n\tvindex[i]=%d\n\tprocu=%d\n\tindu=%d\n\tu=%p\n}\n",
                 i,vindex[i],procu[vindex[i]],
-                indu[vindex[i]],u);
+                indu[vindex[i]],u);*/
 
         bsp_put(procu[vindex[i]], &v[i], u, indu[vindex[i]]*SZDBL, SZDBL);
 

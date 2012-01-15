@@ -154,21 +154,18 @@ void bspcg(){
 
     HERE("rho (r.r) turned out to be = %Lf\n", rho);
     bsp_sync();
-    bsp_abort("first fix up bspip.\n");
     while ( k < KMAX &&
             rho > EPS * EPS * bspip(p,s,nv,nv,v,vindex,v,ownerv,indv)) {
         if ( k == 0 ) {
             // do p := r
             HERE("putting into %p\n", pvec);
-            bsp_sync();
             copyvec(s,nu, nv,r,pvec, uindex, ownerv, indv);
-            bsp_sync();
             for(i=0;i<nv;i++) {
                 HERE("p (==r) [%d]=%lf\n", vindex[i], pvec[i]);
-                bsp_sync();
 
             }
-            bsp_abort("normal\n");
+            //bsp_sync();
+            //bsp_abort("normal\n");
         } else {
             beta = rho/rho_old;
             scalevec(nv, beta, pvec);
