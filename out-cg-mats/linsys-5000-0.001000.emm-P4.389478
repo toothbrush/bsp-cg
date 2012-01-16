@@ -1,0 +1,183 @@
+$MP_PROCS is set to 4.
+CG solver
+   using 4 processors
+Matrix has 29914 nonzeros.
+Loaded a 5000*5000 matrix, proc 0 has 2994 nz.
+[Iteration 01] rho  = 4.060604e+01
+[Iteration 02] rho  = 3.884825e+00
+[Iteration 03] rho  = 3.999861e-01
+[Iteration 04] rho  = 4.272779e-02
+[Iteration 05] rho  = 4.525537e-03
+[Iteration 06] rho  = 4.969072e-04
+[Iteration 07] rho  = 5.394230e-05
+[Iteration 08] rho  = 5.981944e-06
+[Iteration 09] rho  = 6.626064e-07
+[Iteration 10] rho  = 7.208571e-08
+[Iteration 11] rho  = 7.847301e-09
+[Iteration 12] rho  = 8.584315e-10
+[Iteration 13] rho  = 9.395251e-11
+Initialization took only 0.091974 seconds,
+13 CG iterations took only 0.081733 seconds (KMAX = 1500).
+The computed solution is:
+========= Solution =========
+Final error = 9.395251e-11
+
+csv_answer_head:	P,N,nz,time,iters,success
+csv_answer_data:	4,5000,29914,0.081733,13,1
+
+### Summarized output of "llq -l -x -j p6012.huygens.sara.nl.389478.0" invoked on p6016 ###
+        Job Step Id: p6012.huygens.sara.nl.389478.0
+           Job Name: p6012.huygens.sara.nl.389478
+          Step Name: 0
+  Structure Version: 10
+              Owner: bissstud
+         Queue Date: Mon Jan 16 00:29:30 2012
+             Status: Running
+          Recurring: False
+      Dispatch Time: Mon Jan 16 00:29:36 2012
+    Completion Date: Mon Jan 16 00:29:51 CET 2012 (i.e. time of job epilog invocation)
+        Favored Job: No
+      Notifications: Never
+ Virtual Image Size: 1 kb
+         Large Page: N
+         Coschedule: no
+       SMT required: as_is
+    MetaCluster Job: no
+     Checkpointable: no
+   Ckpt Elapse Time: 0 seconds
+    Ckpt Accum Time: 0 seconds
+  Restart From Ckpt: no
+ Restart Same Nodes: no
+            Restart: no
+        Preemptable: yes
+ Preempt Wait Count: 0
+     User Hold Time: 00:00:00 (0 seconds)
+               RSet: RSET_MCM_AFFINITY
+Mcm Affinity Option: MCM_DISTRIBUTE MCM_MEM_PREF MCM_SNI_NONE
+      Task Affinity: core(1)
+      Cpus Per Core:  0
+   Parallel Threads:  0
+                 In: /dev/null
+                Out: out-cg-mats/linsys-5000-0.001000.emm-P4.389478
+                Err: err-cg-mats/linsys-5000-0.001000.emm-P4.389478
+Initial Working Dir: /gpfs/h05/bissstud/Students10/pdwalt/bsp-cg
+          Resources: ConsumableMemory(2.000 gb)
+          Step Type: General Parallel
+         Node Usage: not_shared
+    Submitting Host: p6012.huygens.sara.nl
+        Schedd Host: p6012.huygens.sara.nl
+      Job Queue Key: 389478
+        Notify User: bissstud@p6012.huygens.sara.nl
+              Shell: /bin/bash
+  LoadLeveler Group: No_Group
+              Class: short
+    Ckpt Hard Limit: undefined
+    Ckpt Soft Limit: undefined
+     Cpu Hard Limit: unlimited
+     Cpu Soft Limit: unlimited
+    Data Hard Limit: undefined
+    Data Soft Limit: undefined
+      As Hard Limit: undefined
+      As Soft Limit: undefined
+   Nproc Hard Limit: undefined
+   Nproc Soft Limit: undefined
+ Memlock Hard Limit: undefined
+ Memlock Soft Limit: undefined
+   Locks Hard Limit: undefined
+   Locks Soft Limit: undefined
+  Nofile Hard Limit: undefined
+  Nofile Soft Limit: undefined
+    Core Hard Limit: unlimited
+    Core Soft Limit: 0 bytes
+    File Hard Limit: undefined
+    File Soft Limit: undefined
+   Stack Hard Limit: unlimited
+   Stack Soft Limit: unlimited
+     Rss Hard Limit: undefined
+     Rss Soft Limit: undefined
+Step Cpu Hard Limit: unlimited
+Step Cpu Soft Limit: unlimited
+Wall Clk Hard Limit: 00:30:00 (1800 seconds)
+Wall Clk Soft Limit: 00:30:00 (1800 seconds)
+         Unix Group: bissstud
+ User Space Windows: 0
+      Bulk Transfer: No
+Adapter Requirement: (sn_all,MPI,US,not_shared,AVERAGE,instances=1,)
+          Step Cpus: 0
+Step Virtual Memory: 0.000 mb
+   Step Real Memory: 8.000 gb
+Step Large Page Mem: 0.000 mb
+       Running Host: p6016.huygens.sara.nl
+      Machine Speed: 1.000000
+  Starter User Time: 00:00:00.000000
+Starter System Time: 00:00:00.000000
+ Starter Total Time: 00:00:00.000000
+     Starter maxrss: 0
+      Starter ixrss: 0
+      Starter idrss: 0
+      Starter isrss: 0
+     Starter minflt: 0
+     Starter majflt: 0
+      Starter nswap: 0
+    Starter inblock: 0
+    Starter oublock: 0
+     Starter msgsnd: 0
+     Starter msgrcv: 0
+   Starter nsignals: 0
+      Starter nvcsw: 0
+     Starter nivcsw: 0
+     Step User Time: 00:00:00.000000
+   Step System Time: 00:00:00.000000
+    Step Total Time: 00:00:00.000000
+        Step maxrss: 0
+         Step ixrss: 0
+         Step idrss: 0
+         Step isrss: 0
+        Step minflt: 0
+        Step majflt: 0
+         Step nswap: 0
+       Step inblock: 0
+       Step oublock: 0
+        Step msgsnd: 0
+        Step msgrcv: 0
+      Step nsignals: 0
+         Step nvcsw: 0
+        Step nivcsw: 0
+     Cluster Option: none
+     Network Usages: 0(1,MPI,US,1,0),
+Stripe Min Networks: False
+--------------------------------------------------------------------------------
+Node
+----
+
+   Name            : 
+   Requirements    : 
+   Preferences     : 
+   Node minimum    : 1
+   Node maximum    : 1
+   Node actual     : 1
+   Allocated Hosts : p6016.huygens.sara.nl:RUNNING:,MCM0:CPU< 0-1 >,MCM1:CPU< 16-17 >,MCM2:CPU< 32-33 >,MCM3:CPU< 48-49 >
+
+   Master Task
+   -----------
+
+      Executable   : /home/bissstud/Students10/pdwalt/bsp-cg/linsys-5000-0.001000.emm-P4.job
+      Exec Args    : 
+      Num Task Inst: 1
+      Task Instance: p6016:-1:,
+
+   Task
+   ----
+
+      Num Task Inst: 4
+      Task Instance: p6016:0:,MCM0:CPU< 0-1 >
+      Task Instance: p6016:1:,MCM1:CPU< 16-17 >
+      Task Instance: p6016:2:,MCM2:CPU< 32-33 >
+      Task Instance: p6016:3:,MCM3:CPU< 48-49 >
+--------------------------------------------------------------------------------
+Job Step Status on Allocated Hosts 
+----------------------------------
+
+    p6016.huygens.sara.nl:RUNNING
+
+### End of summarized "llq" output ###
