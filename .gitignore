@@ -4,3 +4,4 @@ cg2
 src/seq
 mats
 *.job
+err-cg-mats/
