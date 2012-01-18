@@ -82,7 +82,7 @@ int main (int argc, char** argv) {
     while(x<N && y<N) { //don't escape matrix bounds.
 
         if (nz_generated % 1000000 == 0) {
-            fprintf(stderr,"progress: %f%%\n", (double)nz_generated/(double)(nz/2.0)*100.0);
+            fprintf(stderr,"progress: %f%%\r", (double)nz_generated/(double)(nz/2.0)*100.0);
         }
         if(x==y) {
             //diagonal, so always generate.
