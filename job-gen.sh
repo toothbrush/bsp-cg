@@ -1,6 +1,11 @@
 #!/bin/bash
 
-for i in mats/*.emm ; do
+if [ "$1" = "" ] ; then
+echo Provide an argument.
+fi
+
+mats=$1
+for i in $mats/*.emm ; do
 
 for p in 1 2 4 8 ; do
 
@@ -16,8 +21,8 @@ tee $jobname > /dev/null <<HERE
 # @ tasks_per_node = $p
 # @ notification = never
 # @ input = /dev/null
-# @ output = out-cg-$mat.\$(jobid)
-# @ error = err-cg-$mat.\$(jobid)
+# @ output = out-nz-$mat.\$(jobid)
+# @ error = err-nz-$mat.\$(jobid)
 # @ wall_clock_limit = 00:30:00
 # @ job_type = parallel
 #
