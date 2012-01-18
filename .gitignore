@@ -5,3 +5,5 @@ src/seq
 mats
 *.job
 err-cg-mats/
+mats-nz-run
+mats-timing-experiment
