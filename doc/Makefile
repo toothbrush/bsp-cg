@@ -1,6 +1,6 @@
 all: report.pdf
 
-report.pdf: report.tex cg.bib
+report.pdf: report.tex cg.bib img/*
 	rubber --pdf report.tex
 
 clean:
