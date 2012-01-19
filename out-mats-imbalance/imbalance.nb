@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[     12966,        360]
-NotebookOptionsPosition[     12209,        328]
-NotebookOutlinePosition[     12546,        343]
-CellTagsIndexPosition[     12503,        340]
+NotebookDataLength[     13903,        386]
+NotebookOptionsPosition[     13036,        350]
+NotebookOutlinePosition[     13371,        365]
+CellTagsIndexPosition[     13328,        362]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -65,7 +65,8 @@ Cell[BoxData[
    RowBox[{"{", 
     RowBox[{"1.`", ",", "0.243999`"}], "}"}]}], "}"}]], "Output",
  CellChangeTimes->{
-  3.53588446876261*^9, {3.535884853118959*^9, 3.535884866388624*^9}}]
+  3.53588446876261*^9, {3.535884853118959*^9, 3.535884866388624*^9}, 
+   3.535963758948379*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -131,7 +132,7 @@ Cell[BoxData[
  CellChangeTimes->{
   3.535883975554099*^9, 3.535884277082107*^9, {3.535884321306481*^9, 
    3.535884376936097*^9}, {3.535884415688594*^9, 3.5358844223032217`*^9}, 
-   3.535884468811014*^9, 3.5358848665666122`*^9}]
+   3.535884468811014*^9, 3.5358848665666122`*^9, 3.535963759107937*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -151,7 +152,7 @@ Cell[BoxData[
    RowBox[{"{", 
     RowBox[{"0.1`", ",", "0.155238`"}], "}"}]}], "}"}]], "Output",
  CellChangeTimes->{3.53588442663282*^9, 3.5358844688191957`*^9, 
-  3.535884866578672*^9}]
+  3.535884866578672*^9, 3.535963759116358*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -209,26 +210,32 @@ Cell[BoxData[
      RowBox[{"ErrorBar", "[", "0.0012353740324290376`", "]"}]}], "}"}]}], 
   "}"}]], "Output",
  CellChangeTimes->{{3.535884472689355*^9, 3.5358845312887163`*^9}, 
-   3.535884760486129*^9, {3.535884826613302*^9, 3.535884885667091*^9}}]
+   3.535884760486129*^9, {3.535884826613302*^9, 3.535884885667091*^9}, 
+   3.5359637591263437`*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[
- RowBox[{"ErrorListPlot", "[", 
-  RowBox[{"withErrors", ",", 
-   RowBox[{"Joined", "\[Rule]", "True"}], ",", " ", 
-   RowBox[{"Mesh", "\[Rule]", "All"}], ",", " ", 
-   RowBox[{"PlotRange", "\[Rule]", 
-    RowBox[{"{", 
-     RowBox[{
-      RowBox[{"{", 
-       RowBox[{"0.05", ",", "1.05"}], "}"}], ",", 
-      RowBox[{"{", 
-       RowBox[{"0.145", ",", ".25"}], "}"}]}], "}"}]}]}], "]"}]], "Input",
+ RowBox[{"plot", "=", 
+  RowBox[{"ErrorListPlot", "[", 
+   RowBox[{"withErrors", ",", 
+    RowBox[{"Joined", "\[Rule]", "True"}], ",", " ", 
+    RowBox[{"Mesh", "\[Rule]", "All"}], ",", " ", 
+    RowBox[{"PlotRange", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"0.05", ",", "1.05"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"0.145", ",", ".25"}], "}"}]}], "}"}]}], ",", 
+    RowBox[{"AxesLabel", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{"\"\<imbalance\>\"", ",", "\"\<time (s)\>\""}], "}"}]}]}], 
+   "]"}]}]], "Input",
  CellChangeTimes->{{3.535883671379074*^9, 3.535883693028655*^9}, {
   3.5358838626941137`*^9, 3.5358839086634703`*^9}, {3.535884877865959*^9, 
-  3.535884976153469*^9}}],
+  3.535884976153469*^9}, {3.5359637627274523`*^9, 3.535963790505102*^9}}],
 
 Cell[BoxData[
  GraphicsBox[
@@ -315,6 +322,9 @@ Cell[BoxData[
           Offset[{-1.5, 0}, {1., 0.24185662596757096`}]}]}}}, {}, {}}}],
   AspectRatio->NCache[GoldenRatio^(-1), 0.6180339887498948],
   Axes->True,
+  AxesLabel->{
+    FormBox["\"imbalance\"", TraditionalForm], 
+    FormBox["\"time (s)\"", TraditionalForm]},
   AxesOrigin->{0.05, 0.145},
   PlotRange->{{0.05, 1.05}, {0.145, 0.25}},
   PlotRangeClipping->True,
@@ -323,11 +333,23 @@ Cell[BoxData[
    3.535883877354164*^9, 3.535883908871068*^9}, {3.535883967713217*^9, 
    3.535883975594344*^9}, 3.535884321345725*^9, 3.535884468868764*^9, 
    3.53588467901154*^9, 3.535884763018848*^9, {3.535884866676362*^9, 
-   3.535884976349525*^9}}]
+   3.535884976349525*^9}, 3.53596375925141*^9, 3.535963792095975*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Export", "[", 
+  RowBox[{"\"\<~/univ/bsp-cg/doc/img/imbalance.pdf\>\"", ",", " ", "plot"}], 
+  "]"}]], "Input",
+ CellChangeTimes->{{3.535963795273041*^9, 3.5359638316610928`*^9}}],
+
+Cell[BoxData["\<\"~/univ/bsp-cg/doc/img/imbalance.pdf\"\>"], "Output",
+ CellChangeTimes->{3.535963833452547*^9}]
 }, Open  ]]
 },
 WindowSize->{638, 503},
-WindowMargins->{{Automatic, 2}, {Automatic, -17}},
+WindowMargins->{{Automatic, 2}, {2, Automatic}},
 FrontEndVersion->"8.0 for Linux x86 (64-bit) (February 23, 2011)",
 StyleDefinitions->"Default.nb"
 ]
@@ -344,27 +366,30 @@ CellTagsIndex->{}
 Notebook[{
 Cell[CellGroupData[{
 Cell[579, 22, 341, 7, 50, "Input"],
-Cell[923, 31, 1260, 36, 107, "Output"]
+Cell[923, 31, 1286, 37, 107, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[2220, 72, 406, 11, 30, "Input"],
-Cell[2629, 85, 1644, 48, 126, "Output"]
+Cell[2246, 73, 406, 11, 30, "Input"],
+Cell[2655, 86, 1666, 48, 126, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[4310, 138, 152, 3, 30, "Input"],
-Cell[4465, 143, 353, 10, 30, "Output"]
+Cell[4358, 139, 152, 3, 30, "Input"],
+Cell[4513, 144, 375, 10, 30, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[4855, 158, 729, 19, 88, "Input"],
-Cell[5587, 179, 1180, 32, 107, "Output"]
+Cell[4925, 159, 729, 19, 88, "Input"],
+Cell[5657, 180, 1208, 33, 107, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[6804, 216, 580, 14, 50, "Input"],
-Cell[7387, 232, 4806, 93, 238, "Output"]
+Cell[6902, 218, 801, 19, 69, "Input"],
+Cell[7706, 239, 4959, 96, 220, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[12702, 340, 203, 4, 30, "Input"],
+Cell[12908, 346, 112, 1, 30, "Output"]
 }, Open  ]]
 }
 ]
 *)
 
 (* End of internal cache information *)
-
