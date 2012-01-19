@@ -22,6 +22,7 @@
 \newcommand{\ve}[1]{\ensuremath{\vec{#1}}}
 \newcommand{\mat}[1]{\ensuremath{\boldsymbol{#1}}}
 \newcommand{\plotsize}{0.7\textwidth}
+\newcommand{\legendplotsize}{1.3\textwidth}
 \section{Introduction}
 
 A well-known problem in problem in first-year courses on linear algebra is the question that
@@ -73,7 +74,7 @@ To get a feel for the algorithm the first step was to implement a sequential ver
 
 \subsection{Data distribution}
 
-\section{Matrix generation}
+\section{Matrix generation}\label{sec:matrix-generation}
 
 % talk a bit about genmat.c
 
@@ -91,6 +92,11 @@ was generated on-the-fly by the \texttt{cg} program, with real values
 in the range $[0,1)$. The random seed was hard-coded into the program,
     so subsequent runs would produce the same outcome.
 
+The running times mentioned are only counting the time taken by the main CG loop
+in the program; initial loading of distributions from files and the distribution of
+nonzero values to their destination processors is considered startup time, and is therefore
+ignored. This also makes comparison of results more compatible.
+
 \subsection{Varying $p$}\label{sec:time-run}
 
 In this experiment, a number of matrices with varying $N$ and nonzero density (referred to as $\delta$) were generated and
@@ -103,65 +109,162 @@ were the defaults, using a load imbalance of 0.3.} for 1, 2, 4 and 8 processors.
     \begin{tabular}{l|l|l|l}
         $N$ & $\delta_{aim}$ & $nz$ & $\delta$ \\ \hline
 1000  &  0.001   &   2000   &   0.002\\
-2000  &  0.001   &   5966   &   0.0014915\\
-1000  &  0.005   &   6032   &   0.006032\\
-1000  &  0.01   &   11044   &   0.011044\\
-2000  &  0.005  &   22030   &   0.0055075\\
-5000  &  0.001   &   29914   &   0.00119656\\
-2000  &  0.01   &   42228   &   0.010557\\
-10000  & 0.001    &   110152   &   0.00110152\\
-5000  &  0.005   &   130212   &   0.00520848\\
-5000  &  0.01  &   256504   &   0.0102602\\
-20000  & 0.001    &   420412   &   0.00105103\\
-10000  & 0.005   &   511034   &   0.00511034\\
-10000  & 0.01   &   1015308   &   0.0101531\\
-20000  & 0.005    &   2024134   &   0.00506034\\
-20000  & 0.01    &   4041652   &   0.0101041\\
-10000  & 0.1    &   10536950   &   0.10537\\
-5000  &  0.5   &   16668124   &   0.666725\\
+2000  &  0.001   &   5966   &   0.00149\\
+1000  &  0.005   &   6032   &   0.006\\
+1000  &  0.01   &   11044   &   0.011\\
+2000  &  0.005  &   22030   &   0.0055\\
+5000  &  0.001   &   29914   &   0.00120\\
+2000  &  0.01   &   42228   &   0.0106\\
+10000  & 0.001    &   110152   &   0.0011\\
+5000  &  0.005   &   130212   &   0.0052\\
+5000  &  0.01  &   256504   &   0.01026\\
+20000  & 0.001    &   420412   &   0.00105\\
+10000  & 0.005   &   511034   &   0.00511\\
+10000  & 0.01   &   1015308   &   0.0102\\
+20000  & 0.005    &   2024134   &   0.0051\\
+20000  & 0.01    &   4041652   &   0.0101\\
+10000  & 0.1    &   10536950   &   0.105\\
+5000  &  0.5   &   16668124   &   0.6668\\
     \end{tabular}
-    \caption{The matrices used for measuring the speedup of using more processors to solve a fixed problem. $N$ is the size of the sparse matrix \mat A (number of rows and columns), $\delta_{aim}$ is the sparsity the matrix generator was aiming for, $nz$ the final number of nonzeroes, and $\delta$ the actual density. }
+    \caption{The matrices used for measuring the speedup of using more processors to solve a fixed problem. $N$ is the size of the sparse matrix \mat A (number of rows and columns), $\delta_{aim}$ is the sparsity the matrix generator was aiming for, $nz$ the final number of nonzeroes, and $\delta$ the actual density. In most cases, $\delta$ has been rounded.}
     \label{tab:time-run}
 \end{table}
 
+The first thing one notices when looking at Table \ref{tab:time-run} is that the actual densities of
+the generated matrices is not precisely equal to the density $\delta_{aim}$ provided to the program
+\texttt{genmat} which generated the test matrices. The reason for this is the way the matrices are
+randomly generated, and is discussed in more detail in Section \ref{sec:matrix-generation}.
+
+When looking globally at Figure \ref{fig:time-run} we see behaviour that we would expect: when
+using more processors to solve a problem, the run time is less. More subtle is the detail that the
+speedup is much more dramatic for larger (in terms of the number of nonzero entries) matrices than for smaller
+ones. This can be explained by the fact that if a given processor doesn't have much work to do, the
+amount of communication needed will be relatively great, whereas when a very large problem is distributed among
+many processors, each processor still has enough work to be kept busy.
+
+We also see that in general, the larger the matrix, the longer the run time, regardless of how many processors
+are used. There are one or two small exceptions, but in general, a larger matrix will take strictly more computing
+time. The exceptions to this observation are explained by the fact that on Huygens we make use of
+shared nodes, so a given node might have been busier when solving a smaller matrix, and that by chance when
+solving a larger matrix, we had the whole node to ourselves. The differences are however insignificant and
+within acceptable tolerance to be explained this way.
 
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=\plotsize]{img/time-run.pdf}
+        \includegraphics[width=\legendplotsize]{img/time-run.pdf}
     \end{center}
     \caption{Varying $P$ while keeping other factors constant.}
     \label{fig:time-run}
 \end{figure}
 
 
+Next, one might wonder how great the advantage actually is of distributing a given matrix over $P$ processors.
+This is explored in Figure \ref{fig:speedup}. Here, we have taken the curves from Figure \ref{fig:time-run} and
+taken the inverse ($1/x$) of each value, after which the values were all scaled by the value for the case
+when $P=1$. This way we can see how many times faster a given run was when run on $P>1$ cores compared to
+when just one (sequential case) was used.
+
+
+
+
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=\plotsize]{img/speedup.pdf}
+        \includegraphics[width=\legendplotsize]{img/speedup.pdf}
     \end{center}
     \caption{The speedup achieved by increasing $P$ with various matrices.}
     \label{fig:speedup}
 \end{figure}
 
-\subsection{Varying load imbalance}\label{sec:imbalance-run}
 
-\begin{figure}[h]
-    \begin{center}
-        \includegraphics[width=\plotsize]{img/imbalance.pdf}
-    \end{center}
-    \caption{The load imbalance's effect on run time. $N=6000$, $P=8$, $\delta=0.1$}
-    \label{fig:imbalance}
-\end{figure}
+Here we see an interesting phenomenon. For the larger matrices, the speedup is rather dramatic
+(at most 10\% less than $P$), whereas the smaller matrices have little or no speedup after $P=2$. The
+reason for this is what was touched upon earlier: when a problem is too small to sensibly distribute over
+many processors, the communication becomes relatively expensive compared to the computation time. Just as we
+wouldn't hire 8 people to help us eat a sandwich, a banquet can be devoured a lot more efficiently by many
+people than if we were to try and finish it on our own.
+
+In other words, for a given matrix size, there is an optimal number of processors to use
+to solve the problem. If we use more, we're slowing the process down again.
 
 
 \subsection{Varying $N$}\label{sec:nz-run}
+
+Something which was purposely left a little vague in the previous section is the
+influence that density has on the performance of our solver. One might wonder if the number of nonzeroes,
+the density of the matrix, or both has an impact, and if so, how much.
+
+To this end, a few matrices of varying size were generated using two target densities, $\delta=0.1$ and $\delta=0.2$, with
+the matrix dimensions chosen such that the number of nonzeroes generated would be in the same order of magnitude each
+time. The matrices used are summarised in Table \ref{tab:nz-mats}. They were all partitioned
+using Mondriaan for $P=2$ and load imbalance 0.0 % TODO: what was load imbalance?
+
+The results are plotted in Figure \ref{fig:density-run}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{l|l|l|l}
+        $N$ & $\delta_{aim}$ & $nz$ & $\delta$ \\ \hline
+1000  & 0.1   &   106342   &   0.106\\
+1000  & 0.2   &   223034   &   0.223\\
+2000  & 0.1   &   423252   &   0.1058\\
+2000  & 0.2   &   889372   &   0.222\\
+3000  & 0.1   &   950022   &   0.1056\\
+4000  & 0.1   &   1689062   &   0.1056\\
+3000  & 0.2   &   2001058   &   0.222\\
+4000  & 0.2   &   3555962   &   0.222\\
+6000  & 0.1   &   3797120   &   0.1055\\
+8000  & 0.1   &   6745868   &   0.1054\\
+5657  & 0.2   &   7110505   &   0.222\\
+    \end{tabular}
+    \caption{A number of matrices generated with different target densities $\delta_{aim}$, but
+with dimensions $N$ chosen such that the number of nonzeroes, $nz$, would be comparable.}
+    \label{tab:nz-mats}
+\end{table}
+
 
 \begin{figure}[h]
     \begin{center}
         \includegraphics[width=\plotsize]{img/density-run.pdf}
     \end{center}
-    \caption{Varying $N$ while achieving a constant final density. $P=2$}
+    \caption{Varying $N$ while maintaining two constant densities. $P=2$}
     \label{fig:density-run}
 \end{figure}
+
+The first observation that can be made is that it is evident that the absolute number of
+nonzero entries for a given matrix has more influence on the run time than the density
+(or, by the same token, the dimension $N$). We do, however, notice a fairly constant
+slowdown of the sparser matrices when compared to the denser matrices. This can be explained
+by thinking about how matrices are partitioned for many processors. Given a certain matrix with
+a certain nonzero pattern, if we double the size $N^2$ but halve the density (to achieve a similar
+number of nonzeros), what might happen is that instead of having a single vector on some processor
+with some nonzeros, it is now split into to, which potentially causes communication. This makes the
+matrix more difficult to partition, which is most likely where the speed penalty comes from. In this
+light, given a number of nonzeros $nz$, it is preferable to have a matrix with smaller $N$ and higher
+density, as far as solving speed goes. Having said all this though, the time difference is
+still very minimal.
+
+\subsection{Varying load imbalance}\label{sec:imbalance-run}
+
+Since for each set of matrices that has been generated, we've used Mondriaan to
+distribute them to minimise communication and load imbalance, it's interesting to
+measure what the impact is of varying the only parameter we've given Mondriaan, namely
+the maximum load imbalance. For this experiment, a single test matrix ($N=6000$, $\delta_{aim}=0.1$) was generated and distributed
+over 8 processors, but each time with a different maximal load imbalance. The
+values used for load imbalance were $\varepsilon = \left\{  0.1, 0.3, 0.6, 0.8\right\}$. The results
+are plotted in Figure \ref{fig:imbalance}.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[width=\plotsize]{img/imbalance.pdf}
+    \end{center}
+    \caption{The load imbalance's effect on run time. $N=6000$, $P=8$, $\delta_{aim}=0.1$}
+    \label{fig:imbalance}
+\end{figure}
+
+%TODO
+
+mention final nz and density of matrix
+mention error bars
 
 \section{Conclusion}
 
