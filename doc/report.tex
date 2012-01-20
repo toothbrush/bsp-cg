@@ -1,6 +1,7 @@
 \documentclass[a4paper]{article}
 
 \usepackage{hyperref}
+\usepackage{pdfpages}
 \usepackage{amsmath}
 \usepackage{algorithmic}
 \usepackage{algorithm}
@@ -16,7 +17,7 @@
 \maketitle
 
 \begin{abstract}
-    This is abstract
+    This is abstract %todo
 \end{abstract}
 
 \newcommand{\ve}[1]{\ensuremath{\vec{#1}}}
@@ -64,19 +65,236 @@ The conjugate gradient algorithm is given in Algorithm \ref{alg:seq-cg}, and is 
 \end{algorithm}
 
 
-\section{The sequential algorithm}
+\subsection{The sequential implementation}
 
-To get a feel for the algorithm the first step was to implement a sequential version. The source code 
+To get a feel for the algorithm the first step was to implement a sequential
+version. The main function, \texttt{cg\_test}, is basically a translation of
+Algorithm \ref{alg:seq-cg} into C. Since the implementation is rather straight
+forward, not much attention is given to this program here. Appendix \ref{sec:seq-code}
+lists the source code of the sequential implementation, but it is unsurprising.
 
 \section{The parallel algorithm}
 
-\subsection{Complexity}
+Once the sequential version had been implemented and declared working, the next
+step was to parallelise. The approach chosen here was to remain distribution-agnostic
+in the entire implementation phase, and allow the user to later on specify distribution,
+or use Mondriaan to suggest one.
 
-\subsection{Data distribution}
+The parallel algorithm is basically the same as Algorithm \ref{alg:seq-cg}, with one
+or two minor differences. For completeness, the parallel version is presented as Algorithm
+\ref{alg:par-cg}.
+
+\begin{algorithm}
+    \caption{Parallelised conjugate gradient algorithm.}
+\label{alg:par-cg}
+\begin{algorithmic}
+    \REQUIRE ~\\
+             $\mat A$ symmetric, positive definite, $n\times n$ matrix,\\
+             $\ve  b$ vector of length $n$
+    \ENSURE  $\mat A \ve x = \ve b$\\~\\
+    \STATE $\ve x \leftarrow \ve{0}$ \COMMENT{initial guess, the zero vector}
+    \STATE $k \leftarrow 0$ \COMMENT{iteration number}
+    \STATE $\ve r \leftarrow \ve b - \mat A \ve x$
+    \STATE $\rho \leftarrow ||\ve r||^2$ \COMMENT{using parallel inproduct, Alg. \ref{alg:bspip}}
+    \WHILE{$\sqrt{\rho} > \epsilon ||\ve b|| \wedge k < k_{max}$}
+        \IF{$k=0$}
+        \STATE $\ve p \leftarrow \ve r$ \COMMENT{using parallel vector copy}
+        \ELSE
+            \STATE $\beta \leftarrow \rho/\rho_{old}$
+            \STATE $\ve p \leftarrow \beta \ve p$
+            \STATE $\ve p \leftarrow \ve r + \ve p$\COMMENT{using parallel add, Alg. \ref{alg:addvec}}
+        \ENDIF
+        \STATE $\vec w \leftarrow \mat A \ve p$ \COMMENT{using parallel mv}
+        \STATE $\gamma \leftarrow \ve p . \ve w$ \COMMENT{using parallel inproduct, Alg. \ref{alg:bspip}}
+        \STATE $\alpha \leftarrow \rho/\gamma$
+        \STATE $\ve x  \leftarrow \ve x + \alpha \ve p$
+        \STATE $\ve r  \leftarrow \ve r - \alpha \ve w$
+        \STATE $\rho_{old} \leftarrow \rho$
+        \STATE $\rho   \leftarrow || \ve r || ^2$ \COMMENT{using parallel inproduct, Alg. \ref{alg:bspip}}
+        \STATE $k \leftarrow k+1$
+    \ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+We refer to Appendix \ref{sec:par-code} for the code listing of the function
+\texttt{bspcg}, which is the main CG implementation. Of course there's a
+\texttt{main} function, which is rather boring and just accepts command line
+arguments and sets up the BSP library to call the \texttt{bspcg} function.  The
+first part of \texttt{bspcg} reads the matrix and vector distibutions, using
+the functions provided in BSPedupack\footnote{BSPedupack is a collection of
+sample BSP programs available from
+\url{http://www.staff.science.uu.nl/~bisse101/Software/software.html}.},
+although with some modifications. These modifications are discussed later
+in Section \ref{sec:data-distribution}. These are distributed to the right
+processor after which the actual work can begin. Since the implementation
+follows the original CG algorithm closely, and doesn't assume any specific
+distribution, the code is quite recognisable compared to Algorithm
+\ref{alg:par-cg}. All the changes actually have been made in the functions
+for computing inproduct, matrix-vector product, and axpy (ignoring the
+minor modifications to the vector and matrix input-functions for now).
+
+
+
+\subsection{Design}
+
+The original assignment suggested using the functions \texttt{bspmv} and \texttt{bspip}
+to turn the sequential CG algorithm into a parallel one. For the matrix-vector multiplications,
+using \texttt{bspmv} unmodified was no problem, since it already assumes that a matrix
+can be arbitrarily distributed, but \texttt{bspip} as provided in BSPedupack
+assumes a cyclic distribution of the vector over the different processors. Since the aim
+was to remain distribution-independent it was necessary to develop a version of \texttt{bspip}
+which would work with arbitrary distributions, and to do this, some metadata needed to be
+collected by the function \texttt{bspinputvec}. What we needed to do is, aside from just distributing
+the indices and values of the vectors to the final processors, we also needed an array
+telling each processor who was the owner of all the other nonzeros, as well as the offset
+at which the given nonzero value was stored on that processor. This way, when we implemented
+\texttt{bspip}, we could use a series of calls to \texttt{bsp\_get} with the knowledge of which
+processor owned the particular nonzero we are interested in.
+\texttt{bspip} is presented in Algorithm \ref{alg:bspip}. Unless otherwise mentioned, vectors
+referred to with upper case names (such as $V$ or $Remote$) mean the original vector which has been
+distributed, and which would be output if all the processors were to return their bit of that vector.
+The lower case variants refer to the segments which each processor holds locally.
+
+\begin{algorithm}
+    \caption{Parallelised vector inner product. Implementation can be found in \texttt{bspinprod.c}.}
+\label{alg:bspip}
+\begin{algorithmic}
+    \REQUIRE ~\\
+             $\ve  {v_1}$ vector of length $nv_1$ containing local components of $V_1$\\
+             $\ve  {v_2}$ vector of length $nv_2$ containing local components of $V_2$\\
+             $vindex$, mapping from indices in $v_1$ to $V_1$\\
+             $procv2$, mapping from global indices of $V_2$ to owner (proc) of vector component\\
+             $indv2$, offset of vector components on owning processor
+    \ENSURE  return value is $\ve{V_1}.\ve{V_2}$, inner product\\~\\
+    \STATE Create array $v2local$ of size $nv_1$
+    \FOR{$i=0$ to $nv_1$}
+    \STATE Fetch $x$ from processor $procv2[vindex[i]]$ at position $indv2[vindex[i]]$
+    \STATE Store $v2local[i] \leftarrow x$
+    \ENDFOR
+    \STATE $inprod \leftarrow 0$
+    \FOR{$i=0$ to $nv_1$}
+    \STATE $inprod \leftarrow inprod + v_1[i]*v2local[i]$
+    \ENDFOR \COMMENT{Now $inprod$ contains the local processor's contribution to the final inproduct}
+    \STATE Send $inprod$ to $P(\star)$ \COMMENT{Broadcast $s$' contribution}
+    \RETURN Sum of local plus all received $inprod$s
+\end{algorithmic}
+\end{algorithm}
+
+\texttt{bspinputvec} was also modified to generate and store a random real
+value in the interval $[0,1)$ to serve as a test vector to solve against, since
+    originally it only loaded the distribution, and not an associated real
+    value per vector component. By setting a fixed random seed in that
+    function, we always get consistent results. The functions
+    \texttt{bspinput2triple} and \texttt{triple2icrs} were used as provided in
+    BSPedupack, essentially unmodified, since these functions are already
+    capable of working with arbitrary distributions.
+
+
+Next we still needed parallel-compatible axpy function. Once the needed metadata arrays
+were collected on reading the vector distribution, the implementation of a parallel axpy
+was straight forward.
+The actual implementation of the parallel axpy \texttt{p: r + $\beta$p;} was implemented
+as first scaling the vector \ve p by $\beta$, then using a parallel-capable vector-add,
+implemented in \texttt{addvec}.
+\texttt{scalevec} of course can get away with just letting each processor scale all it's local
+vector components by $\beta$, but \texttt{addvec} needs a little more work. 
+\texttt{addvec} is presented in Algorithm \ref{alg:addvec}.
+
+
+\begin{algorithm}
+    \caption{Parallelised vector sum. Implementation can be found in \texttt{bspinprod.c}.}
+\label{alg:addvec}
+\begin{algorithmic}
+    \REQUIRE ~\\
+             $\ve  {v}$ vector of length $nv$ containing local components of $V_1$\\
+             $\ve  {remote}$ vector of length $nr$ containing local components of $V_2$\\
+             $vindex$, mapping from indices in $v$ to $V$\\
+             $procr$, mapping from global indices of $Remote$ to owner (proc) of vector component\\
+             $indr$, offset of vector components on owning processor
+             \ENSURE  $\ve V = \ve{oldV} + \ve{Remote}$ componentwise\\~\\
+    \STATE Create array $rlocal$ with size $nv$
+    \FOR{$i=0$ to $nv$}
+        \STATE Retrieve $x$ from processor $procr[vindex[i]]$ at index $indr[vindex[i]]$
+        \STATE $rlocal[i] \leftarrow x$
+    \ENDFOR
+    \FOR{$i=0$ to $nv$}
+    \STATE Store $v[i] \leftarrow v[i] + rlocal[i]$
+    \ENDFOR \COMMENT{Now $\ve v$ contains the sum of the old $\ve v$ and $\ve remote$}
+\end{algorithmic}
+\end{algorithm}
+
+
+The parallel vector copy works much the same as Algorithm \ref{alg:addvec} and is 
+considered rather uninteresting. For brevity, it will therefore not be included here.
+
+
+
+\subsection{Complexity} %TODO
+
+\subsection{Data distribution}\label{sec:data-distribition}
+
+As has been mentioned before and detailed in Algorithms \ref{alg:bspip,alg:addvec}, the
+implementation of CG presented here makes no assumptions about data distributions. This makes
+the computation a little more complex, and requires metadata structures to be generated initially
+(such as $vindex$ or the pair $(procv,indv)$, but this has the added benefit that whatever
+distribution a user thinks is best (or which is suggested by Mondriaan) can be tried out.
+
+However, Mondriaan outputs 2 vector distributions when partitioning a given matrix \mat A, namely
+a distribution referred to as $u$ and one referred to as $v$. These differing distributions are
+there because Mondriaan assumes a matrix-vector multiplication will be done, of the form $\ve u = \mat A \ve v$. Since the CG algorithm revolves around the sparse multiplication of \mat A (the input matrix) and
+\ve p (the intermediate vector), it makes a lot of sense to use the distribution Mondriaan outputs as $v$ for \ve p. This choice almost automatically implies which distribution the other vectors should have.
+
+Since the result of the multiplication $\mat A \ve p$ is stored in \ve w, \ve w gets the distribution $u$.oThe only vector operations we do with \ve x are to add $\alpha \ve p$ to it, therefore we give it
+distribution $v$ too. With a similar argument, we distribute \ve r according to $u$, since it is used in an axpy with \ve w. Only \ve b hasn't been discussed yet, and it is only used once in the initialisation;
+it is copied into \ve r. This implies that we should use distribution $u$ for \ve b.
+
+Of course, this makes some communication necessary, mainly in the steps where an axpy is done between \ve r and \ve p, or where the inner product of \ve p and \ve w is taken, but this is relatively minor compared
+with the saving in communication during the sparse matrix-vector multiplication of \mat A and \ve p which
+our use of Mondriaan has optimised.
+
+In summary, the distribution of the vectors as used in Algorithm \ref{alg:par-cg} is as presented in Table
+\ref{tab:distributions}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{c|c}
+        Vector & distribution \\ \hline
+        \ve p & $v$ \\
+        \ve x & $v$ \\
+        \ve r & $u$ \\
+        \ve w & $u$ \\
+        \ve b & $u$ \\
+    \end{tabular}
+    \caption{The distributions of the vectors of the parallel CG algorithm. The names
+    $u$ and $v$ refer to the output distributions of the same names obtained after
+partitioning a matrix using Mondriaan.}
+    \label{tab:distributions}
+\end{table}
+
+\section{Research questions}
+
+A number of experiments were done with the parallel CG program, while
+varying certain parameters in the matrix generation and Mondriaan's distribution,
+motivated by a few research questions.
+
+The first and most obvious question is, how does the running time of the algorithm
+scale with $P$, the number of processors used? Also, what is the
+bottleneck here? This question is explored in Section
+\ref{sec:time-run}.
+
+Next, we ask whether varying the density (as opposed to the size $N\times N$ of the matrix) has
+any influence on the running time of the algorithm. This is explored in Section \ref{sec:nz-run}.
+
+Finally, the question of whether the number of iterations needed to achieve a certain maximum
+error is influenced by the distribution or the number of processors which is used is posed, except
+this is answered by looking at the algorithm as opposed to running experiments. Clearly, since the
+intermediate answers and actual numeric values at each iteration of the CG algorithm are independent
+of the number of processors or the distribution used, the number of iterations is independent of these
+factors too. Only the speed with which a solution is arrived at is influenced by these variables.
 
 \section{Matrix generation}\label{sec:matrix-generation}
 
-% talk a bit about genmat.c
+% talk a bit about genmat.c %TODO
 
 \section{Experimental results}
 
@@ -285,7 +503,7 @@ however.
 
 \section{Conclusion}
 
-
+ %TODO
 \appendix
 \clearpage
 \section{Bug fixed in BSPedupack}
@@ -425,6 +643,16 @@ If it is not already installed, OpenMPI will be installed as a dependency of BSP
 % here we need
 % the bspcg.c
 
+
+\subsection{Parallel \texttt{bspcg} function}\label{sec:par-code}
+
+
+
+\subsection{Sequential \texttt{cg\_test} function}\label{sec:seq-code}
+
+%TODO document code and format nicely, then add final hardcopy
+\clearpage
+\includepdf[pages={1,2}]{seq-code.pdf}
 
 \bibliographystyle{plain}
 \bibliography{cg}
