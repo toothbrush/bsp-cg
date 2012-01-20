@@ -5,6 +5,6 @@ report.pdf: report.tex cg.bib img/*
 
 clean:
 	rubber --clean report.tex
-	rm -f report.pdf
+	rm -vf report.pdf
 
 .PHONY: clean

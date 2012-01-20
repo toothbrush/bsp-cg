@@ -10,6 +10,7 @@ doc: force-look
 clean: force-look
 	@echo ==== Cleaning package ====
 	(cd src; make clean)
+	(cd doc; make clean)
 
 src: force-look
 	@echo ==== Building tools ====
