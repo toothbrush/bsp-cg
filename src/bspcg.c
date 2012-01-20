@@ -167,10 +167,11 @@ void bspcg(){
             scalevec(nv, beta, pvec);
             addvec(nv,pvec,vindex, nu, r, owneru, indu);
         }
+        // w := Ap
         bspmv(p,s,n,nz,nrows,ncols,a,ia,srcprocv,srcindv,
               destprocu,destindu,nv,nu,pvec,w);
 
-        // gamma = p^T w
+        // gamma = p.w
         gamma = bspip(p,s,nv,nu,pvec,vindex,w,owneru,indu);
 
         alpha = rho/gamma;
@@ -184,6 +185,7 @@ void bspcg(){
                                r);
 
         rho_old = rho;
+        // rho := ||rho||^2
         rho = bspip(p,s,nu,nu,r,uindex,r,owneru,indu);
 
         k++;

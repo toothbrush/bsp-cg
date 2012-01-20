@@ -1,7 +1,9 @@
 #include "bspfuncs.h"
 #include "bspedupack.h"
 
-// This is from BSPedupack
+// This is from BSPedupack, except for the modifications involving
+// size_t instead of int. See the report for details.
+//                                          -- Paul, January 2012
 
 void bspmv(int p, int s, int n, int nz, int nrows, int ncols,
            double *a, int *inc,

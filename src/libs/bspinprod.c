@@ -5,6 +5,22 @@
 // This is my own version; since bspip from BSPedupack
 // cannot handle v1 and v2 having arbitrary distributions.
 
+/*
+ * bspip computes the inner product of two vectors, arbitrarily distributed
+ * over a number of processors.
+ *
+ * The parameters:
+ *
+ * - p: number of processors
+ * - s: my processor id
+ * - nv1 and nv2: the length of the vectors
+ * - v1 and v2: the locally-stored components of v1 and v2
+ * - v1index: the array which maps my local indexing of v1 to the global index
+ * - procv2 and indv2: arrays mapping global vector indices to owner and offset on owner. (i.e. this tells us which processor owns a given nonzero)
+ *
+ * @return the inproduct of the two vectors
+ */
+
 double bspip(int p,int s,
         int nv1, int nv2,
         double* v1, int*v1index,
@@ -48,6 +64,8 @@ double bspip(int p,int s,
         if(s==i) // don't send myself messages.
             continue;
 
+        // tell all the other processors what my inproduct
+        // contribution is
         bsp_send(i, &s, &myip, SZDBL);
     }
 
@@ -59,15 +77,18 @@ double bspip(int p,int s,
     int nbytes;
 #endif
 
-    double alpha = myip;
+    double alpha = myip; //since we won't be receiving this component
+
     bsp_qsize(&nsums, &nbytes);
     int status, tag;
     bsp_get_tag(&status, &tag);
 
+    // get all the messages for this processor, which are
+    // the inproduct contributions for the other processors.
     for(i=0;i<nsums; i++) {
         bsp_move(&myip, SZDBL);
 
-        alpha += myip;
+        alpha += myip; // simply sum all the messages
         bsp_get_tag(&status, &tag);
 
     }
@@ -82,7 +103,17 @@ double bspip(int p,int s,
 } /* end bspip */
 
 /*
- * copy distributed vec v into u
+ * Copy distributed vec v into u. Note that v and u may have different
+ * distributions.
+ *
+ * - s: my processor id
+ * - nv and nu: the length of the vectors
+ * - v and u: the locally-stored components of v and u
+ * - vindex: the array which maps my local indexing of v to the global index
+ * - procu and indu: arrays mapping global vector indices to owner and offset on owner. (i.e. this tells us which processor owns a given nonzero)
+ *
+ * This function doesn't return anything, but places a copy of vector v into u, so
+ * after the function terminates, u == v == \old{v}.
  */
 void copyvec(int s,
         int nv, int nu,
@@ -97,7 +128,9 @@ void copyvec(int s,
 
     for(i=0;i<nv;i++) {
 
-        // put my v into u somewhere remote
+        // put my v into u somewhere remote;
+        // we look up the correct processor and position on
+        // that processor using the metadata arrays procu and indu
         bsp_put(procu[vindex[i]], &v[i], u, indu[vindex[i]]*SZDBL, SZDBL);
     }
 
@@ -106,7 +139,14 @@ void copyvec(int s,
 }
 
 /*
- * add some other distributed vec to v (local)
+ * Add some other distributed vector (r) to v (local)
+ *
+ * - nv and nr: the length of the vectors
+ * - v and remote: the locally-stored components of v and remote vector
+ * - vindex: the array which maps my local indexing of v to the global index
+ * - procr and indr: arrays mapping global vector indices to owner and offset on owner. (i.e. this tells us which processor owns a given nonzero)
+ *
+ * Ensures that afterwards, v = \old{v} + remote, componentwise and on each processor
  */
 
 void addvec(int nv, double *v, int*vindex, int nr, double *remote,
@@ -118,7 +158,8 @@ void addvec(int nv, double *v, int*vindex, int nr, double *remote,
 
     int i;
     for(i=0;i<nv;i++) {
-        // similar to how my bspip gets the proc that's relevant.
+        // similar to how bspip above gets the proc that's relevant, and knows where
+        // that processor stores the vector component we want.
         bsp_get(procr[vindex[i]], remote, indr[vindex[i]]*SZDBL, &tmp[i], SZDBL);
     }
     bsp_pop_reg(remote);

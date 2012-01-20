@@ -13,7 +13,7 @@
 #include "bspedupack.h"
 
 /*
- * return a random double in the interval [0,1]
+ * return a random double in the interval [0,1)
  */
 double ran() {
 
@@ -23,7 +23,7 @@ double ran() {
 
 
 /*
- * useful function to stat a file
+ * useful function to stat a file for existence
  */
 bool file_exists(const char * filename)
 {
@@ -58,7 +58,8 @@ void zero (int nv, double * a)
 }
 
 /*
- * Calculate ax+y.
+ * Calculate ax+y for all local vector components, and
+ * store the result in array "result".
  */
 void local_axpy (int n, double a, double* x, double* y,double* result) {
 
@@ -81,10 +82,10 @@ void scalevec(int n, double factor, double*vec)
 
 /*
  * This function wraps printf to redirect debug
- * output to stderr. This is useful if we (later) want
- * to create a tool pipeline like
+ * output to stderr. This is useful if we want
+ * to filter output, like for example
  *
- * $ gen-matrix | proc-matrix | print-matrix
+ * $ ./bin/cg 2> /dev/null
  *
  * or whatever.
  */
@@ -94,9 +95,9 @@ void out(int proc, char*at, const char *fmt, ...)
     va_start(argp, fmt);
 
     char extended_fmt[1024];
-    // may be a bit hacky, but this gives different colours to different proc's output.
-    // only possible on POSIX I'm afraid. Untested on anything but Linux+zsh as yet.
-    // Turns out OS X also does the trick.
+    // may be a bit hacky, but this gives different colours to different proc's
+    // output.  only possible on POSIX I'm afraid. Untested on anything but
+    // Linux+{zsh,bash} and OS X.
     if(proc == -1) {
         sprintf(extended_fmt, "%s (P.) -- \t%s", at, fmt);
     } else {

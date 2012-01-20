@@ -301,6 +301,7 @@ void bspinputvec(int p, int s, const char *filename,
         *tmpproc, *tmpind, *Nv, *vindex;
     FILE *fp;
 
+    // somewhere to store the vector reals
     double *allVals;
 
     bsp_push_reg(&n,SZINT);
@@ -352,8 +353,8 @@ void bspinputvec(int p, int s, const char *filename,
             for(k=q*b; k<(q+1)*b && k<n; k++){
                 // we're going to generate a random value here, because
                 // Mondriaan doesn't preserve nonzero values of vectors.
-                //fscanf(fp,"%d %d %lf\n", &i, &proc, &allVals[k]); // also save value
-                fscanf(fp,"%d %d\n", &i, &proc); // also save value
+                fscanf(fp,"%d %d\n", &i, &proc);
+                // generate a random vector nonzero.
                 allVals[k]=ran();
                 /* Convert index and processor number to ranges
                    0..n-1 and 0..p-1, assuming they were
@@ -395,15 +396,16 @@ void bspinputvec(int p, int s, const char *filename,
     bsp_pop_reg(vindex);
 
     // we want:
-    // proc %d knows that proc %d owns (local) idx %d (=global vindex(..)),
-    // and stores it in remote idx %d
+    // all procs know that proc %d owns (local) idx %d (=global vindex(..)),
+    // and stores it in remote idx (or, array offset) %d
 
     vecfreei(tmpind);
     vecfreei(tmpproc);
 
     /* grab reals from P0 */
-    // and also tell each other who owns what, and where.
 
+    // and also tell each other who owns what, and where.
+    // these metadata arrays facilitate this.
     int* allowners = vecalloci(n);
     int* alllocalindices = vecalloci(n);
 
@@ -419,7 +421,7 @@ void bspinputvec(int p, int s, const char *filename,
         for(i = 0; i<p; i++) {
             // tell everyone about ownership of this value
             bsp_put(i, &s, allowners, vindex[k]*SZINT, SZINT);
-            // and also mention where I store that value
+            // and also mention where this processor stored that value
             bsp_put(i, &k, alllocalindices, vindex[k]*SZINT, SZINT);
         }
     }
