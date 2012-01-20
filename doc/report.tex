@@ -251,7 +251,8 @@ measure what the impact is of varying the only parameter we've given Mondriaan, 
 the maximum load imbalance. For this experiment, a single test matrix ($N=6000$, $\delta_{aim}=0.1$) was generated and distributed
 over 8 processors, but each time with a different maximal load imbalance. The
 values used for load imbalance were $\varepsilon = \left\{  0.1, 0.3, 0.6, 0.8\right\}$. The results
-are plotted in Figure \ref{fig:imbalance}.
+are plotted in Figure \ref{fig:imbalance}. The final number of nonzeroes in the matrix is 3797120, which
+means a final density $\delta=0.1054$.
 
 \begin{figure}[h]
     \begin{center}
@@ -261,10 +262,26 @@ are plotted in Figure \ref{fig:imbalance}.
     \label{fig:imbalance}
 \end{figure}
 
-%TODO
+Since the curve at first didn't adhere to the expectation (that decreasing load balance
+would strictly decrease running time), these matrices were solved thrice each, but as can
+be seen by the plotted error (equal to the standard deviation of each set of timings), there is
+hardly any variation in running time between runs.
 
-mention final nz and density of matrix
-mention error bars
+The expectation was that decreasing imbalance would have a positive effect on running time, but at
+$\varepsilon=0.6$ we see that the running time is almost as good as when using $\varepsilon=0.1$ (the
+slower $\varepsilon=0.6$ run is in fact only 3.4\% slower). A few extra runs were done around $\varepsilon=0.6$
+because of this unexpected result.
+
+The new hypothesis in light of these experimental results is that using $\varepsilon=0.6$ is a ``sweet spot''
+where the trade-off between amount of communication and load imbalance is favourable. Using a lower $\varepsilon$,
+causing all the processors to have roughly the same number of nonzeroes is evidently less efficient than allowing some
+imbalance but lowering communication. It would appear then that the
+communication is relatively more expensive for this size of matrix. It would be
+interesting to vary the number of nonzeros in the input matrix and see if this
+sweet spot disappears, or moves up or down in terms of $\varepsilon$. In the
+end the variation in run time isn't that great depending on $\varepsilon$,
+however.
+
 
 \section{Conclusion}
 
@@ -352,7 +369,7 @@ is to make a clone of the GitHub repository containing this project, which can b
 \url{http://github.com/toothbrush/bsp-cg}. If one would like to try running the programs on the exact matrices
 used to generate the results presented here, an archive containing all the matrices with their
 different partitionings ($P=1,2,4,8, \ldots$) is provided (warning: large
-download) at \url{http://denknerd.org/} %TODO provide matrices online
+download of $\pm 1.7$G) at \url{http://ca.denknerd.org/projects/cg-matrices.tar.bz2}.
 
 The archive contains a number of folders, which correspond to the various experimental runs
 presented in this report. Each folder contains one or more \texttt{*.emm} files, which are the original
