@@ -1,10 +1,7 @@
 *.o
-src/cg
-cg2
-src/seq
-mats
 *.job
-err-cg-mats/
 mats-nz-run
 mats-timing-experiment
 mats-imbalance
+bin
+matrices.tar.bz2

@@ -25,4 +25,4 @@ bspedupack.o: bspedupack.c bspedupack.h
 	$(CC) $(CFLAGS) -c bspedupack.c
 
 clean:
-	rm -f *.o
+	rm -vf *.o
