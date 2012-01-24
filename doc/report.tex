@@ -240,7 +240,7 @@ analyses are a little less meaningful than if the distributions are known a prio
 in fact give a rather pessimistic impression if one assumes worst-case performance everywhere,
 which is the right way to do things. The analysis is however insightful.
 
-As is typical behaviour of computer scientists, the complexity will be measured using big-O
+As is typical behaviour of computer scientists, the complexity will be measured using big-$\mathcal{O}$
 notation, and will be accompanied by a lot of hand-waving.
 
 We start by observing that we have a few known quantities. $P$ is the number of
@@ -260,11 +260,11 @@ Inside the main loop, we see a constant number of calls to \texttt{bspip}, one c
 number of calls to parallel axpy, which is actually a local scaling, then a parallel addition (\texttt{addvec}, Algorithm \ref{alg:addvec}).
 The single call to parallel copy is ignored since it is only called once and is dominated by the rest of the while loop.
 
-This gives us Equation \ref{eq1} as the complexity of the outer program. As usual when using big-O, we ignore
+This gives us Equation \ref{eq1} as the complexity of the outer program. As usual when using big-$\mathcal{O}$, we ignore
 constant factors.
 
 \begin{equation}
-    O\left( (inprod + localscale + paralleladd + bspmv)\times K \right)
+   \mathcal{O}\left( (inprod + localscale + paralleladd + bspmv)\times K \right)
     \label{eq1}
 \end{equation}
 
@@ -274,11 +274,11 @@ arrive at Equation \ref{eq8} for computation complexity, and Equation
 \ref{eq9} for communication.
 
 \begin{equation}
-    O\left( \left(P+4\frac{\left(1+eps\right) N}{P} + N\right) \times K\right)
+   \mathcal{O}\left( \left(P+4\frac{\left(1+eps\right) N}{P} + N\right) \times K\right)
     \label{eq8}
 \end{equation}
 \begin{equation}
-    O\left( \left( \left( P + 2\left(1+eps\right)\frac{N}{P} + N \right)g + l\right) \times K\right)
+   \mathcal{O}\left( \left( \left( P + 2\left(1+eps\right)\frac{N}{P} + N \right)g + l\right) \times K\right)
     \label{eq9}
 \end{equation}
 
@@ -297,15 +297,15 @@ are multiplied and summed. Now the final step, broadcasting the answer,
 can be done.
 
 This translates to $nv_1$ times a fetch-operation (assuming nothing is
-available locally), and a store. This gives $O(nv_1 + nv_1 g)$. Next
+available locally), and a store. This gives $\ensuremath{\mathcal{O}}(nv_1 + nv_1 g)$. Next
 all the fetched components are multiplied with the local ones and summed,
-giving $O(nv_1)$ more computation. Finally the results are broadcast,
-giving $O(P g + P)$ for sending and summing again locally.
+giving $\ensuremath{\mathcal{O}}(nv_1)$ more computation. Finally the results are broadcast,
+giving $\ensuremath{\mathcal{O}}(P g + P)$ for sending and summing again locally.
 
 This gives us a total complexity for \texttt{bspip} given in Equation \ref{eq2}.
 
 \begin{equation}
-    O(P + nv_1 + (P + nv_1) g)
+   \mathcal{O}(P + nv_1 + (P + nv_1) g)
     \label{eq2}
 \end{equation}
 
@@ -315,7 +315,7 @@ We know that Mondriaan was invoked with a maximum imbalance of $eps$,
 so $nv$ is at most $(1+eps)\frac{N}{P}$. Filling this in gives Equation \ref{eq3}. The function has 3 computation supersteps, corresponding to the phases fetch, compute, distribute.
 
 \begin{equation}
-    O\left(P + \frac{\left(1+eps\right)N}{P} + \left(P + \frac{(1+eps)N}{P}\right) g + 3l\right)
+   \mathcal{O}\left(P + \frac{\left(1+eps\right)N}{P} + \left(P + \frac{(1+eps)N}{P}\right) g + 3l\right)
     \label{eq3}
 \end{equation}
 
@@ -326,7 +326,7 @@ $nv$ and multiplies it in-place by some $\beta$. This gives the
 straight forward complexity given in Equation \ref{eq4}.
 
 \begin{equation}
-    O\left( \frac{\left(1+eps\right)N}{P}\right)
+   \mathcal{O}\left( \frac{\left(1+eps\right)N}{P}\right)
     \label{eq4}
 \end{equation}
 
@@ -342,7 +342,7 @@ The complexity of this function is given in Equation \ref{eq5}, and
 is simple to verify. The function has 2 phases, namely fetch and compute, leading to the 2 synchronisations with cost $l$.
 
 \begin{equation}
-    O\left( \frac{(1+eps)N}{P}  + \frac{(1+eps)N}{P} g + 2l\right)
+   \mathcal{O}\left( \frac{(1+eps)N}{P}  + \frac{(1+eps)N}{P} g + 2l\right)
     \label{eq5}
 \end{equation}
 \subsubsection{Parallel matrix-vector multiplication complexity}
@@ -355,7 +355,7 @@ This is given as in Equation \ref{eq6}, where $c$ is the number of
 nonzeros per row, and the other variables are as usual.
 
 \begin{equation}
-    O\left(\frac{2cN}{P} + N + 2(1-1/P)Ng + 4l\right)
+   \mathcal{O}\left(\frac{2cN}{P} + N + 2(1-1/P)Ng + 4l\right)
     \label{eq6}
 \end{equation}
 
@@ -364,7 +364,7 @@ nonzeros per processor, $(1+eps) \frac{N}{P}$, and simplify the equation
 a bit, yielding Equation \ref{eq7}.
 
 \begin{equation}
-    O\left( (1+eps)\frac{N}{P}  + N + Ng + l  \right)
+   \mathcal{O}\left( (1+eps)\frac{N}{P}  + N + Ng + l  \right)
     \label{eq7}
 \end{equation}
 
@@ -450,18 +450,18 @@ nonzeros, and assigned them random $(i,j)$ matrix coordinates along with a rando
 were eliminated and all the missing diagonal values were added (plus $\mu$), after which a transpose step
 was done to ensure symmetry. This indeed produced matrices that had the desired properties, but
 was very inefficient (especially the pruning of duplicates and
-transposing which had complexity $O( (N^2\delta_{aim})^2 )$, as a result of a naive lookup of already-generated values)
+transposing which had complexity $\ensuremath{\mathcal{O}}( (N^2\delta_{aim})^2 )$, as a result of a naive lookup of already-generated values)
 and didn't produce a final density $\delta$ very close to $\delta_{aim}$.
 
 The solution to this problem was developed incrementally, but the final matrix generator is much more efficient,
-having a complexity of $O(nz)$, where $nz$ is the number of desired nonzeroes ($=N^2\delta_{aim}$). The way this
+having a complexity of $\ensuremath{\mathcal{O}}(nz)$, where $nz$ is the number of desired nonzeroes ($=N^2\delta_{aim}$). The way this
 was achieved was firstly the insight that the fact that the matrix should be symmetric could be exploited: only
 the upper triangle need be generated and stored. Next, we don't generate a random sparsity pattern per se, but allocate
 a list of nonzeroes which is roughly as long as we expect we'll need, then populate the matrix left-to-right, top-to-bottom,
 by choosing random increments (roughly $1/\delta_{aim}$, with a random
 deviation) for $i$, then placing a nonzero at that position, and when $i>N$,
 incrementing $j$. At the same time, we maintain an auxiliary array of size $N$ booleans,
-indicating whether diagonal value $N$ has been generated, so that afterwards it's an $O(N)$ operation
+indicating whether diagonal value $N$ has been generated, so that afterwards it's an $\ensuremath{\mathcal{O}}(N)$ operation
 to add missing diagonals. The value $\mu$ is also added in the first phase, so a second iteration to add $\mu\mat I$ isn't
 necessary.
 
