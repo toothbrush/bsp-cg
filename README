@@ -1,6 +1,6 @@
 Parallel CG solver
 
-To get started, make a checkout:
+To get started, make a checkout: (or download the source: https://github.com/toothbrush/bsp-cg/zipball/submitted-20120124)
 
 $ git clone https://toothbrush@github.com/toothbrush/bsp-cg.git
 
