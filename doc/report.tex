@@ -7,7 +7,7 @@
 \usepackage{algorithm}
 \usepackage{graphicx}
 
-\author{Paul van der Walt\footnote{\url{paul@@denknerd.org}}\\ \url{http://github.com/toothbrush/bsp-cg}}
+\author{Paul van der Walt\footnote{\url{paul@denknerd.org}}\\ \url{http://github.com/toothbrush/bsp-cg}}
 \date{\today}
 \title{A Parallel CG Algorithm\footnote{This work is inspired by Exercise 4.6 of PSC\cite{bisseling2004parallel}}}
 
@@ -197,7 +197,7 @@ value in the interval $[0,1)$ to serve as a test vector to solve against, since
 Next we still needed parallel-compatible axpy function. Once the needed metadata arrays
 were collected on reading the vector distribution, the implementation of a parallel axpy
 was straight forward.
-The actual implementation of the parallel axpy \texttt{p: r + $\beta$p;} was implemented
+The actual implementation of the parallel axpy \texttt{p:= r + $\beta$p;} was implemented
 as first scaling the vector \ve p by $\beta$, then using a parallel-capable vector-add,
 implemented in \texttt{addvec}.
 \texttt{scalevec} of course can get away with just letting each processor scale all it's local
@@ -264,7 +264,7 @@ This gives us Equation \ref{eq1} as the complexity of the outer program. As usua
 constant factors.
 
 \begin{equation}
-    O(inprod + localscale + paralleladd + bspmv)\times K)
+    O\left( (inprod + localscale + paralleladd + bspmv)\times K \right)
     \label{eq1}
 \end{equation}
 
@@ -274,11 +274,11 @@ arrive at Equation \ref{eq8} for computation complexity, and Equation
 \ref{eq9} for communication.
 
 \begin{equation}
-    O( (P+4\frac{(1+eps)N}{P} + N) \times K)
+    O\left( \left(P+4\frac{\left(1+eps\right) N}{P} + N\right) \times K\right)
     \label{eq8}
 \end{equation}
 \begin{equation}
-    O( ( ( P + 2(1+eps)\frac{N}{P} + N )g + l) \times K)
+    O\left( \left( \left( P + 2\left(1+eps\right)\frac{N}{P} + N \right)g + l\right) \times K\right)
     \label{eq9}
 \end{equation}
 
@@ -315,7 +315,7 @@ We know that Mondriaan was invoked with a maximum imbalance of $eps$,
 so $nv$ is at most $(1+eps)\frac{N}{P}$. Filling this in gives Equation \ref{eq3}. The function has 3 computation supersteps, corresponding to the phases fetch, compute, distribute.
 
 \begin{equation}
-    O(P + \frac{(1+eps)N}{P} + (P + \frac{(1+eps)N}{P}) g + 3l)
+    O\left(P + \frac{\left(1+eps\right)N}{P} + \left(P + \frac{(1+eps)N}{P}\right) g + 3l\right)
     \label{eq3}
 \end{equation}
 
@@ -326,7 +326,7 @@ $nv$ and multiplies it in-place by some $\beta$. This gives the
 straight forward complexity given in Equation \ref{eq4}.
 
 \begin{equation}
-    O( \frac{(1+eps)N}{P})
+    O\left( \frac{\left(1+eps\right)N}{P}\right)
     \label{eq4}
 \end{equation}
 
@@ -342,7 +342,7 @@ The complexity of this function is given in Equation \ref{eq5}, and
 is simple to verify. The function has 2 phases, namely fetch and compute, leading to the 2 synchronisations with cost $l$.
 
 \begin{equation}
-    O( \frac{(1+eps)N}{P}  + \frac{(1+eps)N}{P} g + 2l)
+    O\left( \frac{(1+eps)N}{P}  + \frac{(1+eps)N}{P} g + 2l\right)
     \label{eq5}
 \end{equation}
 \subsubsection{Parallel matrix-vector multiplication complexity}
@@ -355,7 +355,7 @@ This is given as in Equation \ref{eq6}, where $c$ is the number of
 nonzeros per row, and the other variables are as usual.
 
 \begin{equation}
-    O(\frac{2cN}{P} + N + 2(1-1/P)Ng + 4l)
+    O\left(\frac{2cN}{P} + N + 2(1-1/P)Ng + 4l\right)
     \label{eq6}
 \end{equation}
 
@@ -364,7 +364,7 @@ nonzeros per processor, $(1+eps) \frac{N}{P}$, and simplify the equation
 a bit, yielding Equation \ref{eq7}.
 
 \begin{equation}
-    O( (1+eps)\frac{N}{P}  + N + Ng + l  )
+    O\left( (1+eps)\frac{N}{P}  + N + Ng + l  \right)
     \label{eq7}
 \end{equation}
 
@@ -770,6 +770,9 @@ index 5dabc65..a05a2f1 100644
      /****** Superstep 0. Initialize and register ******/
      for(i=0; i<nu; i++)
          u[i]= 0.0;
+\end{verbatim}
+\clearpage
+\begin{verbatim}
 diff --git a/src/libs/vecio.c b/src/libs/vecio.c
 index 052138d..958e64d 100644
 --- a/src/libs/vecio.c
