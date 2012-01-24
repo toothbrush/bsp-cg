@@ -1,15 +1,24 @@
-QUESTIONS
+Parallel CG solver
 
-* Distribution v?
-* Distribution x? Same as v.
-* Distribution r? Same as v.
-* Distribution p? Same as v. 
-* Distribution w? Same as v.
-* motivate above choices
-* Time complexity
+To get started, make a checkout:
 
-* experiment and explain. 
-* try different n and p and nonzero densities
-* runtime of bspcg scale with p?
-* what is bottleneck?
-* is nItersNeeded dependent on P and distribution? no.
+$ git clone https://toothbrush@github.com/toothbrush/bsp-cg.git
+
+Then build the package:
+
+$ cd bsp-cg
+$ make
+
+Now you can run the program included, for example:
+
+$ mpirun -np N ./bin/cg examplemat.{P,u,v}
+
+Generate a matrix using:
+
+$ ./bin/genmat 1000 300 0.1
+
+or look at the usage guide:
+
+$ ./bin/genmat
+
+That's all!
