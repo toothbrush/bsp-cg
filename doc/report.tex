@@ -171,7 +171,7 @@ The lower case variants refer to the segments which each processor holds locally
              $indv2$, offset of vector components on owning processor
     \ENSURE  return value is $\ve{V_1}.\ve{V_2}$, inner product\\~\\
     \STATE Create array $v2local$ of size $nv_1$
-    \FOR{$i=0$ to $nv_1$}
+    \FOR{$i=0$ to $nv_1 -1$}
     \STATE Fetch $x$ from processor $procv2[vindex[i]]$ at position $indv2[vindex[i]]$
     \STATE Store $v2local[i] \leftarrow x$
     \ENDFOR
@@ -200,7 +200,7 @@ was straight forward.
 The actual implementation of the parallel axpy \texttt{p:= r + $\beta$p;} was implemented
 as first scaling the vector \ve p by $\beta$, then using a parallel-capable vector-add,
 implemented in \texttt{addvec}.
-\texttt{scalevec} of course can get away with just letting each processor scale all it's local
+\texttt{scalevec} of course can get away with just letting each processor scale all its local
 vector components by $\beta$, but \texttt{addvec} needs a little more work. 
 \texttt{addvec} is presented in Algorithm \ref{alg:addvec}.
 
@@ -369,7 +369,7 @@ a bit, yielding Equation \ref{eq7}.
 \end{equation}
 
 
-\subsection{Data distribution}\label{sec:data-distribition}
+\subsection{Data distribution}\label{sec:data-distribution}
 
 As has been mentioned before and detailed in Algorithms \ref{alg:bspip} and \ref{alg:addvec}, the
 implementation of CG presented here makes no assumptions about data distributions. This makes
@@ -382,7 +382,7 @@ a distribution referred to as $u$ and one referred to as $v$. These differing di
 there because Mondriaan assumes a matrix-vector multiplication will be done, of the form $\ve u = \mat A \ve v$. Since the CG algorithm revolves around the sparse multiplication of \mat A (the input matrix) and
 \ve p (the intermediate vector), it makes a lot of sense to use the distribution Mondriaan outputs as $v$ for \ve p. This choice almost automatically implies which distribution the other vectors should have.
 
-Since the result of the multiplication $\mat A \ve p$ is stored in \ve w, \ve w gets the distribution $u$.oThe only vector operations we do with \ve x are to add $\alpha \ve p$ to it, therefore we give it
+Since the result of the multiplication $\mat A \ve p$ is stored in \ve w, \ve w gets the distribution $u$. The only vector operations we do with \ve x are to add $\alpha \ve p$ to it, therefore we give it
 distribution $v$ too. With a similar argument, we distribute \ve r according to $u$, since it is used in an axpy with \ve w. Only \ve b hasn't been discussed yet, and it is only used once in the initialisation;
 it is copied into \ve r. This implies that we should use distribution $u$ for \ve b.
 
@@ -440,7 +440,7 @@ $[-1,1]$, and call this \mat B.  Now assign $\mat A \leftarrow \mat B + \mat
 B^T + \mu \mat I$, where \mat I is the identity matrix with the correct
 dimensions for the desired result matrix and $\mu$ is a scalar chosen to
 guarantee that all absolute values of the diagonals are larger than the sum of
-the absolute values of that row ($|a_{iI}| > \sum_{j=0,j\neq i}^{n-1}
+the absolute values of that row ($|a_{ii}| > \sum_{j=0,j\neq i}^{n-1}
 |a_{ij}|$\footnote{This property is referred to as strict diagonal dominance}).
 It has been shown that such a matrix is also positive definite, which is what
 we wanted.
@@ -478,7 +478,7 @@ nonzeroes to be generated.
 \section{Experimental results}
 
 A number of experiments were done to explore what the effect of varying $p$,
-$N$, nonzero density or processor distribution would be. Specifically, series
+$N$, nonzero density or processor distribution would be. Specifically, a series
 of matrices was generated to measure the running time with varying $p$ (section
 \ref{sec:time-run}), running time with varying load imbalance (section
 \ref{sec:imbalance-run}), and running time with varying $N$ (section
@@ -498,7 +498,7 @@ ignored. This also makes comparison of results more compatible.
 
 In this experiment, a number of matrices with varying $N$ and nonzero density (referred to as $\delta$) were generated and
 subsequently distributed using Mondriaan\footnote{The settings used for Mondriaan
-were the defaults, using a load imbalance of 0.3.} for 1, 2, 4 and 8 processors. Table \ref{tbl:time-run} lists the actual matrix configurations used. The runtimes for each matrix are displayed in Figure \ref{fig:time-run}.
+were the defaults, using a load imbalance of 0.3.} for 1, 2, 4 and 8 processors. Table \ref{tab:time-run} lists the actual matrix configurations used. The runtimes for each matrix are displayed in Figure \ref{fig:time-run}.
 
 \begin{table}
     \centering
@@ -634,7 +634,7 @@ slowdown of the sparser matrices when compared to the denser matrices. This can 
 by thinking about how matrices are partitioned for many processors. Given a certain matrix with
 a certain nonzero pattern, if we double the size $N^2$ but halve the density (to achieve a similar
 number of nonzeros), what might happen is that instead of having a single vector on some processor
-with some nonzeros, it is now split into to, which potentially causes communication. This makes the
+with some nonzeros, it is now split into two, which potentially causes communication. This makes the
 matrix more difficult to partition, which is most likely where the speed penalty comes from. In this
 light, given a number of nonzeros $nz$, it is preferable to have a matrix with smaller $N$ and higher
 density, as far as solving speed goes. Having said all this though, the time difference is
